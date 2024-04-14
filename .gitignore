@@ -1,2 +1,5 @@
 wandb_secret.txt
 /Data
+/__pycache__
+/.DS_store
+/venv
