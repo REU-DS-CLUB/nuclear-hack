@@ -4,3 +4,4 @@ wandb_secret.txt
 /.DS_store
 /venv
 /wandb
+/.vs
