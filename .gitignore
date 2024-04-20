@@ -1,7 +1,7 @@
 wandb_secret.txt
 ProxyapiSecret.txt
 /Data
-/__pycache__
+*__pycache__
 /.DS_store
 /venv
 /.venv
