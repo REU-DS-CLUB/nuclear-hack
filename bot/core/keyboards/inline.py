@@ -6,9 +6,9 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 def get_inline_start():
     keyboard_builder = InlineKeyboardBuilder()
     keyboard_builder.button(text='Ввести запрос в свободной форме', callback_data="text" )
-    # keyboard_builder.button(text='Воспользоваться кнопками для выбора станции', callback_data="buttons")
+    keyboard_builder.button(text='Ввести запрос в форме голосового сообщения', callback_data="voice")
     
-    keyboard_builder.adjust(1)
+    keyboard_builder.adjust(1, 1)
     return keyboard_builder.as_markup()
 
 def get_inline_check():
@@ -18,8 +18,6 @@ def get_inline_check():
     
     keyboard_builder.adjust(1, 1)
     return keyboard_builder.as_markup()
-
-
 
 
 def get_inline_branches(sheet: int):
@@ -58,18 +56,9 @@ def get_inline_stations(sheet: int):
     keyboard_builder.adjust(4, 4, 4)
     return keyboard_builder.as_markup()
 
-# def get_inline_animal():
-#     keyboard_builder = InlineKeyboardBuilder()
-#     keyboard_builder.button(text='Кот', callback_data=InlineInfo(type='', IsLocated=False, IsContact=False, animal='cat'))
-#     keyboard_builder.button(text='Собака', callback_data=InlineInfo(type='', IsLocated=False, IsContact=False, animal='dog'))
-    
-#     keyboard_builder.adjust(2)
-#     return keyboard_builder.as_markup()
+def get_inline_developers():
+    keyboard_builder = InlineKeyboardBuilder()
 
-# def get_inline_geo_contact():
-#     keyboard_builder = InlineKeyboardBuilder()
-#     keyboard_builder.button(text='Отправить геолокацию', callback_data=InlineInfo(IsLocated=True, IsContact=False, type='', animal=''), request_location = True)
-#     keyboard_builder.button(text='Отправить свой контакт', callback_data=InlineInfo(IsLocated=False, IsContact=True, type='', animal=''), request_contact = True)
-    
-#     keyboard_builder.adjust(1, 1)
-#     return keyboard_builder.as_markup()
+    keyboard_builder.button(text="Показать информацию о разработчиках", callback_data="developers")
+    keyboard_builder.adjust(1)
+    return keyboard_builder.as_markup()

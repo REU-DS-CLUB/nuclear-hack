@@ -2,20 +2,35 @@ from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 import json
-from core.keyboards.inline import get_inline_branches, get_inline_check, get_inline_start
+from core.keyboards.inline import get_inline_branches, get_inline_check, get_inline_developers, get_inline_start
 from core.utils.dbconnect import Request
 from core.utils.statesform import ButtonsSteps, DocumentSteps, TextSteps, VoiceSteps
 
 
 async def get_start(message: Message, bot: Bot, state: FSMContext):
-    await message.answer("Привет!\nЯ - бот для хакатона Nuclear Hack. \nЯ создан, чтобы помогать людям узнавать загруженность станций" \
-                         "\nЧтобы ввести запрос в свободной форме отправь команду \"\\text\"" , reply_markup=get_inline_start() )
+    await message.answer("Привет!\nЯ - бот для хакатона Nuclear Hack. \nЯ создан, чтобы помогать людям узнавать " \
+                         "загруженность станций Московского метро в любой день и время!\n" \
+                         "Отправь команду \"\\help\", чтобы узнать подробнее о доступных командах и разработчиках", reply_markup=get_inline_start() )
 
 
 async def get_text(message: Message, bot: Bot, state: FSMContext):
     await state.update_data(text = message.text)
-    # Здесь типо парсинг и выделение станции из запроса, но пока просто текст
-    await message.answer(f"Выбранная станция {message.text} - Верно?", reply_markup=get_inline_check())
+    context_data = await state.get_data()
+    if (context_data.get('possible_stations') == None):
+        get_possible_stations = ['1', '2', '3'] # Здесь обращаюсь к предварительной АПИ функции Темы и получаю массив из 3 версий
+        await state.update_data(possible_stations = get_possible_stations)
+        await state.update_data(check_station = 0)
+        await message.answer(f"Выбранная станция {get_possible_stations[0]} - Верно?", reply_markup=get_inline_check())
+    else:
+        check_station = int(context_data.get('check_station'))
+        get_possible_stations = context_data.get("possible_stations")
+        if (check_station > 2):
+            await message.answer(f"Я не смог корректно обработать твой запрос. Пожалуйста, попробуй еще раз позже")
+            await state.clear()
+            # state.set_data({})
+        else:
+            await message.answer(f"Выбранная станция {get_possible_stations[check_station]} - Верно?", reply_markup=get_inline_check())
+
     await state.set_state(TextSteps.IS_CORRECT)
     
 async def select_buttons_command(message: Message, bot: Bot, state: FSMContext):
@@ -58,8 +73,16 @@ async def get_voice(message: Message, bot: Bot):
     print(*file)
     await bot.download_file(file_path, "voices/" + str(file_id) +".oga")
     await message.answer("Я принял твой голосовой запрос! Сейчас обработаю его.")
-
     
+async def command_cancel(message: Message, bot: Bot, state: FSMContext):
+    await state.clear()
+
+async def command_help(message: Message, bot: Bot):
+    await message.answer("Чтобы начать работу с ботом и получить приветственное сообщение отправь команду \"\\start\"\n" \
+                        "Чтобы ввести запрос в свободной форме отправь команду \"\\text\"\n" \
+                        "Чтобы отправить новые данные для ML модели боту отправь команду \"\\file\"\n" \
+                       "Чтобы сделать запрос голосовым сообщением отправь команду \"\\voice\"\n" \
+                       "Чтобы сбросить текущий запрос к ML модели отправь команду \"\\voice\"\n", reply_markup=get_inline_developers())
 
 
 

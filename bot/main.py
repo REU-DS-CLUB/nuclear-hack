@@ -7,8 +7,8 @@ import aiomysql
 from core.utils.Confidential import DEV_TOKEN, ADMIN_ID
 
 from aiogram.fsm.storage.redis import RedisStorage
-from core.handlers.basic import command_file, command_voice, get_document, get_start, get_text, get_voice, select_buttons_command, select_text_command
-from core.handlers.callback import predict, select_buttons, select_check, select_station, select_text
+from core.handlers.basic import command_file, command_help, command_voice, get_document, get_start, get_text, get_voice, select_buttons_command, select_text_command
+from core.handlers.callback import developers, predict, select_buttons, select_check, select_station, select_text, select_voice
 
 from aiogram.filters import Command, CommandStart, callback_data
 from aiogram import F
@@ -48,11 +48,8 @@ async def start():
                         "(%(filename)s.%(funcName)s(%(lineno)d) - %(message)s")
 
     bot = Bot(token=DEV_TOKEN, parse_mode='HTML')
-
     #pool_connect = await create_pool()
-
     storage = RedisStorage.from_url('redis://localhost:6379/0')
-
     dp = Dispatcher(storage=storage) 
 
     # dp.update.middleware.register(DBSession(pool_connect))
@@ -60,6 +57,7 @@ async def start():
 
 
     dp.message.register(get_start, Command(commands='start'))  # CommandStart()
+    
     dp.message.register(select_text_command, Command(commands='text'))
     # dp.message.register(select_buttons_command, Command(commands='buttons'))
 
@@ -82,8 +80,11 @@ async def start():
     
     dp.message.register(command_file, Command(commands='file'))
     dp.message.register(command_voice, Command(commands='voice'))
+    dp.callback_query.register(select_voice, F.data.contains("voice"))
+    dp.message.register(command_help, Command(commands='help'))
     
-    
+    dp.callback_query.register(developers, F.data.contains("developers"))    
+
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
 
