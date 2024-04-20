@@ -3,5 +3,6 @@ wandb_secret.txt
 /__pycache__
 /.DS_store
 /venv
+/.venv
 /wandb
 /.vs
