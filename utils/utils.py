@@ -1,6 +1,5 @@
-from asyncio import Task
-from msilib.schema import File
 from tkinter import W
+from numpy import column_stack
 import requests
 import json
 import uuid
@@ -177,9 +176,7 @@ def voice_to_text(voice: str):
                     print(text)
                     return text
                 else:
-                    print("Проблема с получением транскрипта")
-                
-                        
+                    print("Проблема с получением транскрипта")         
 
         else:
             print("Проблема с запросом")
@@ -187,7 +184,7 @@ def voice_to_text(voice: str):
     else:
         print("Проблема при осуществулении доступа к SalutSpeech Token")
         
-voice_to_text(r"D:\source\repos\nuclear-hack\voiceAwACAgIAAxkBAAOCZiPvdXpCGkUtba9TPn4OWxF_BsEAAkxHAAJjiCBJJThFtRFabo00BA.oga")
+# voice_to_text(r"D:\source\repos\nuclear-hack\voiceAwACAgIAAxkBAAOCZiPvdXpCGkUtba9TPn4OWxF_BsEAAkxHAAJjiCBJJThFtRFabo00BA.oga")
     
 def get_gigachat_message(auth_key, user_message):
     """
@@ -246,16 +243,20 @@ def get_gigachat_message(auth_key, user_message):
         return -1
     
 
-def get_user_station(auth_key, user_message):
+def get_user_station(user_message):
+    auth_key = "MTQ1Zjk2YTMtOWI2YS00MzUyLWIwN2QtZDkxZGU3N2UzMTg1OmM0YmRkOTIzLWY2ZDctNDk4MC04OTBjLWM2ZDk0NzQ0YmRhYQ=="
     task_gigachat = "используя информацию из user_message вычлени название станции метро и отправь его в формате json в виде: {'station' :'название станции из user_message'}"
     message = f"отправь без комментриаев 'user_message': {user_message},'task':'{task_gigachat}'"
 
     user_station_json = json.loads(get_gigachat_message(auth_key=auth_key, user_message=message).replace("'", '"'))
     return user_station_json["station"]
 
-def get_user_dates(api_key, user_message, date_now):
 
-    date_now = '2022-09-01'
+def get_user_dates(user_message, date_now):
+
+    with open('ProxyapiSecret.txt', 'r') as file:
+        api_key = file.read()
+
     task_gpt  = """
     Проанализируй user_message для определения запрашиваемого в сообщении временного интервала учитвая время date_now:
     1. Выдели начало запрашиваемого периода в формате (ГГГГ-ММ-ДД ЧЧ:ММ). Например для запроса проанализируй пассажиропоток за предыдущий год при текущей дате 2022-09-01 нужно вывести 01.01.2021.
@@ -280,20 +281,36 @@ def get_user_dates(api_key, user_message, date_now):
     answer = json.loads(answer)
     return answer
     
+
 def get_lev(metro_data, user_station):
     lev_dict_list = []
-    for metro in metro_data["Станция"]:
+    for index, row in metro_data.iterrows():
         lev_dict = {}
-        lev = fuzz.WRatio(metro, user_station)
-        lev_dict["station"] = metro
-        lev_dict["lev"] = lev
+        lev = fuzz.WRatio(row["Станция"], user_station)
+        lev_dict["Станция"] = row["Станция"]
+        lev_dict["Расстояние Ливинштейна"] = lev
+        lev_dict["Линия"] = row["Линия"]
         lev_dict_list.append(lev_dict) 
 
     lev_df = pd.DataFrame(lev_dict_list)
         
-    return lev_df.sort_values(by='lev', ascending=False).head(3)
+    return lev_df.sort_values(by='Расстояние Ливинштейна', ascending=False).head(3)
 
-#return json.loads(answer['choices'][0]['message']['content'])["station"]
+def rename_station(df):
+    with open("utils/rename_station.json", 'r') as file:
+        rename_dict = json.load(file)
+    
+    drop = ["К", "ТПУ Рязанская"]
+    df = df[~df["Станция"].isin(drop)]
+    df['Станция'] = df['Станция'].replace(rename_dict)
+    return df
+
+def preprocessing(df):
+    df.rename(columns={'Дата': 'Линия'}, inplace=True)
+    df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], keep='first', inplace=True)
+    df = rename_station(df)
+    return df
+
 
 
 # HOUR DISTRIBUTION COEF
@@ -321,7 +338,10 @@ def fill_plot_values():
     return work, rest
 
 
-def coef(date, time_start="00:00", time_end="23:30"):
+def coef(date, start="00:00", end="23:30"):
+
+    time_start = datetime.datetime.strptime(start, "%H:%M").time()
+    time_end = datetime.datetime.strptime(end, "%H:%M").time()
 
     timestamps = form_timelist()
     workday, weekday = fill_plot_values()

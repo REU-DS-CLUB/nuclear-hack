@@ -7,3 +7,4 @@ ProxyapiSecret.txt
 /.venv
 /wandb
 /.vs
+/utils/__pycache__
