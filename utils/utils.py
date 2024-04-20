@@ -177,9 +177,7 @@ def voice_to_text(voice: str):
                     print(text)
                     return text
                 else:
-                    print("Проблема с получением транскрипта")
-                
-                        
+                    print("Проблема с получением транскрипта")         
 
         else:
             print("Проблема с запросом")
@@ -187,7 +185,7 @@ def voice_to_text(voice: str):
     else:
         print("Проблема при осуществулении доступа к SalutSpeech Token")
         
-voice_to_text(r"D:\source\repos\nuclear-hack\voiceAwACAgIAAxkBAAOCZiPvdXpCGkUtba9TPn4OWxF_BsEAAkxHAAJjiCBJJThFtRFabo00BA.oga")
+# voice_to_text(r"D:\source\repos\nuclear-hack\voiceAwACAgIAAxkBAAOCZiPvdXpCGkUtba9TPn4OWxF_BsEAAkxHAAJjiCBJJThFtRFabo00BA.oga")
     
 def get_gigachat_message(auth_key, user_message):
     """
@@ -253,9 +251,12 @@ def get_user_station(auth_key, user_message):
     user_station_json = json.loads(get_gigachat_message(auth_key=auth_key, user_message=message).replace("'", '"'))
     return user_station_json["station"]
 
-def get_user_dates(api_key, user_message, date_now):
+def get_user_dates(user_message, date_now):
 
-    date_now = '2022-09-01'
+    with open('ProxyapiSecret.txt', 'r') as file:
+        api_key = file.read()
+
+    # date_now = '2022-09-01'
     task_gpt  = """
     Проанализируй user_message для определения запрашиваемого в сообщении временного интервала учитвая время date_now:
     1. Выдели начало запрашиваемого периода в формате (ГГГГ-ММ-ДД ЧЧ:ММ). Например для запроса проанализируй пассажиропоток за предыдущий год при текущей дате 2022-09-01 нужно вывести 01.01.2021.
@@ -280,6 +281,7 @@ def get_user_dates(api_key, user_message, date_now):
     answer = json.loads(answer)
     return answer
     
+
 def get_lev(metro_data, user_station):
     lev_dict_list = []
     for metro in metro_data["Станция"]:
