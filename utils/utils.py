@@ -338,7 +338,10 @@ def fill_plot_values():
     return work, rest
 
 
-def coef(date, time_start="00:00", time_end="23:30"):
+def coef(date, start="00:00", end="23:30"):
+
+    time_start = datetime.datetime.strptime(start, "%H:%M").time()
+    time_end = datetime.datetime.strptime(end, "%H:%M").time()
 
     timestamps = form_timelist()
     workday, weekday = fill_plot_values()
