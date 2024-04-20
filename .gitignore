@@ -9,3 +9,7 @@ ProxyapiSecret.txt
 /.vs
 /utils/__pycache__
 /bot/core/__pycache__
+
+algos.ipynb
+distribution.ipynb
+metro_parsing.ipynb
