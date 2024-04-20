@@ -146,6 +146,9 @@ def voice_to_text(voice: str):
             # print(*response)
             # print("----------------", file_id)
             
+            if (os.path.exists(voice)):
+                os.remove(voice)
+            
             task_id = response.json()["result"]["id"] 
             # print("----------------", task_id)
             status = ""
