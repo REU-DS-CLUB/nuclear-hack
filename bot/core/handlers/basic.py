@@ -58,7 +58,8 @@ async def get_voice(message: Message, bot: Bot):
     file_id = message.voice.file_id
     file = await bot.get_file(file_id)
     file_path = file.file_path
-    await bot.download_file(file_path, "voice" + str(file_id) +".mp3")
+    print(*file)
+    await bot.download_file(file_path, "voice" + str(file_id) +".oga")
     await message.answer("Я принял твой голосовой запрос! Сейчас обработаю его.")
 
     

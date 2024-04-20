@@ -1,3 +1,4 @@
+from asyncio import Task
 from msilib.schema import File
 from tkinter import W
 import requests
@@ -93,7 +94,9 @@ def upload_voice(ss_token, voice):
     'Content-Type': 'application/x-www-form-urlencoded',
 }
     with open(voice, 'rb') as f:
+        # print("--------------", voice)
         data = f.read()
+        # print("---------------", data)
 
     response = requests.post('https://smartspeech.sber.ru/rest/v1/data:upload', headers=headers, data=data, verify=False)
     print(response)
@@ -103,9 +106,9 @@ def recognize_voice(ss_token, file_id):
     headers = {
     'Authorization': f'Bearer {ss_token}',
     'Content-Type': 'application/json',
-}
+    }
     
-    data = '\n{\n  "options": {\n    "language": "ru-RU",\n    "audio_encoding": "mp3",\n    "sample_rate": 16000,\n    "hypotheses_count": 1,\n    "enable_profanity_filter": false,\n    "max_speech_timeout": "20s",\n    "channels_count": 2,\n    "no_speech_timeout": "7s",\n    "hints": {\n        "words": ["станция", "ветка"],\n        "enable_letters": true,\n        "eou_timeout": "2s"\n    },\n    "insight_models": ["csi"],\n    "speaker_separation_options": {\n      "enable": true, \n      "enable_only_main_speaker": false, \n      "count": 2\n    }\n  },\n  "request_file_id": "' + str(file_id) + '"\n}'
+    data = '\n{\n  "options": {\n    "language": "ru-RU",\n    "audio_encoding": "OPUS",\n    "sample_rate": 48000,\n    "hypotheses_count": 1,\n    "enable_profanity_filter": false,\n    "max_speech_timeout": "20s",\n    "channels_count": 1,\n    "no_speech_timeout": "7s",\n    "hints": {\n        "words": ["станция", "ветка"],\n        "enable_letters": true,\n        "eou_timeout": "2s"\n    },\n    "speaker_separation_options": {\n      "enable": true, \n      "enable_only_main_speaker": false, \n      "count": 2\n    }\n  },\n  "request_file_id": "' + str(file_id) + '"\n}'
     data = data.encode()
     response = requests.post('https://smartspeech.sber.ru/rest/v1/speech:async_recognize', headers=headers, data=data, verify= False)
     return response
@@ -115,7 +118,7 @@ def get_status(ss_token, task_id):
     'Authorization': f'Bearer {ss_token}',
 }
 
-    response = requests.get(f'https://smartspeech.sber.ru/rest/v1/task:get?id={task_id}', headers=headers, verify=False)
+    response = requests.get('https://smartspeech.sber.ru/rest/v1/task:get?id='+str(task_id), headers=headers, verify=False)
     return response
 
 def get_transcript(ss_token, response_file_id):
@@ -125,42 +128,47 @@ def get_transcript(ss_token, response_file_id):
 
     response = requests.get(
     f'https://smartspeech.sber.ru/rest/v1/data:download?response_file_id={response_file_id}',
-    headers=headers,
+    headers=headers, verify=False
 )
     return response
 
 def voice_to_text(voice: str):
     auth_key = "MTljNjgxNmQtNDFmOS00MjQ3LWIxMzYtYzA0ODRlZWFmOGY5Ojk0MjgwZGJkLTBmYWMtNGNhZC05NTAzLWY0NWNlZGUzOWJhYQ=="
     response = get_ss_token(auth_token=auth_key)
-    print(response)
-    if response != -1:
+    # print(response)
+    if (response != -1):
         ss_token = response.json()['access_token']
         response = upload_voice(ss_token=ss_token, voice=voice)
         
         if (response != -1):
             file_id = response.json()["result"]["request_file_id"]            
             response = recognize_voice(ss_token=ss_token, file_id=file_id)
-            print(response)
+            # print(*response)
+            # print("----------------", file_id)
             
-            task_id = response["result"]["id"] 
+            task_id = response.json()["result"]["id"] 
+            # print("----------------", task_id)
             status = ""
             
-            while (status != "DONE" or status != "-1"):
-                time.sleep(0.1)
+            while (status != "DONE" and status != "-1"):
+                time.sleep(1)
                 response = get_status(ss_token=ss_token, task_id=task_id)
-                if (status != - 1):
-                    status = response["result"]["status"]                    
+                # print(*response)
+                if (status != "ERROR"):
+                    status = response.json()["result"]["status"]   
+                    # print(status)
                 else:
                     print("Проблема со статусом")
                     status = "-1"
             
             if (status == "DONE"):
-                response_file_id = response["result"]["response_file_id"] 
+                response_file_id = response.json()["result"]["response_file_id"] 
                 response = get_transcript(ss_token=ss_token, response_file_id=response_file_id)
                 
                 if (response != -1):
-                    text = response["results"]["text"] #normalized_text
-                    print("-------------------------------")
+                    # print(*response)
+                    text = response.json()[0]["results"][0]["normalized_text"] #text
+                    print("-------------------------------RESULT---------------------")
                     print(text)
                     return text
                 else:
@@ -174,7 +182,7 @@ def voice_to_text(voice: str):
     else:
         print("Проблема при осуществулении доступа к SalutSpeech Token")
         
-voice_to_text(r"D:\source\repos\nuclear-hack\utils\voiceAwACAgIAAxkBAAN0ZiPGsNSnef-qBS87pf6jXAFTkaEAAolHAAJjiBhJfyY61sPVXWE0BA.mp3")
+voice_to_text(r"D:\source\repos\nuclear-hack\voiceAwACAgIAAxkBAAOCZiPvdXpCGkUtba9TPn4OWxF_BsEAAkxHAAJjiCBJJThFtRFabo00BA.oga")
     
 def get_chat_station(auth_key, user_message):
     """
