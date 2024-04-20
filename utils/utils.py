@@ -103,7 +103,8 @@ def get_gigachat_message(auth_key, user_message):
         return -1
     
 
-def get_user_station(auth_key, user_message):
+def get_user_station(user_message):
+    auth_key = "MTQ1Zjk2YTMtOWI2YS00MzUyLWIwN2QtZDkxZGU3N2UzMTg1OmM0YmRkOTIzLWY2ZDctNDk4MC04OTBjLWM2ZDk0NzQ0YmRhYQ=="
     task_gigachat = "используя информацию из user_message вычлени название станции метро и отправь его в формате json в виде: {'station' :'название станции из user_message'}"
     message = f"отправь без комментриаев 'user_message': {user_message},'task':'{task_gigachat}'"
 
@@ -111,6 +112,7 @@ def get_user_station(auth_key, user_message):
     return user_station_json["station"]
 
 def get_user_dates(api_key, user_message, date_now):
+    
 
     date_now = '2022-09-01'
     task_gpt  = """
@@ -139,15 +141,73 @@ def get_user_dates(api_key, user_message, date_now):
     
 def get_lev(metro_data, user_station):
     lev_dict_list = []
-    for metro in metro_data["Станция"]:
+    for index, row in metro_data.iterrows():
         lev_dict = {}
-        lev = fuzz.WRatio(metro, user_station)
-        lev_dict["station"] = metro
+        lev = fuzz.WRatio(row["станция"], user_station)
+        lev_dict["station"] = row["station"]
         lev_dict["lev"] = lev
+        lev_dict["line"] = row["line"]
         lev_dict_list.append(lev_dict) 
 
     lev_df = pd.DataFrame(lev_dict_list)
         
     return lev_df.sort_values(by='lev', ascending=False).head(3)
+
+def station_rename(df):
+    df.rename({"Б.Рокоссовского":"Бульвар Рокоссовского",
+    "Преображенск. пл":"Преображенская площадь",
+    "Пр-т Вернадск.СЛ":"Проспект Вернадского",
+    "Красногвардейск.":"Красногвардейская",
+    "Павелецкая ЗЛ":"Павелецкая",
+    "Театральная(Зам)":"Театральная",
+    "Белорусская ЗЛ":"Белорусская",
+    "Киевская АПЛ":"Киевская",
+    "Смоленская АПЛ":"Смоленская",
+    "Арбатская АПЛ":"Арбатская",
+    "Пл. Революции":"Площадь Революции",
+    "Курская АПЛ":"Курская",
+    "Электрозав-я АПЛ":"Электрозаводская",
+    "Арбатская ФЛ":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+    "":"",
+
+                       
+
+
+
+
+
+
+
+
+
+
+
+    },axis=1, inplace=True)
 
 #return json.loads(answer['choices'][0]['message']['content'])["station"]
