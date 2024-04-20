@@ -268,7 +268,7 @@ def get_user_dates(user_message, date_now):
     request_gpt = f"date_now: {date_now} , user_massage: {user_message}, task: {task_gpt}"
 
     client = OpenAI(
-        api_key=my_api_key,
+        api_key=api_key,
         base_url="https://api.proxyapi.ru/openai/v1",
     )
 
@@ -510,6 +510,7 @@ def fill_plot_values():
 
 def coef(date, start="00:00", end="23:30"):
 
+    # date = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M').date()
     time_start = datetime.datetime.strptime(start, "%H:%M").time()
     time_end = datetime.datetime.strptime(end, "%H:%M").time()
 
@@ -523,7 +524,9 @@ def coef(date, start="00:00", end="23:30"):
         values = workday
     
     # ищем индексы с временем
-    index_start = timestamps.index(time_start.strftime('%H:%M'))
-    index_end = timestamps.index(time_end.strftime('%H:%M'))
+    # index_start = timestamps.index(time_start.strftime('%H:%M'))
+    # index_end = timestamps.index(time_end.strftime('%H:%M'))
+    index_start = next((i for i, ts in enumerate(timestamps) if ts >= time_start.strftime('%H:%M')), 0)
+    index_end = next((i for i, ts in enumerate(timestamps) if ts >= time_end.strftime('%H:%M')), len(timestamps) - 1)
 
     return sum(values[index_start:index_end + 1]) / sum(values)
