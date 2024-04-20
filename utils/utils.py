@@ -94,8 +94,7 @@ def get_chat_station(auth_key, user_message):
     # Выполнение POST-запроса и возвращение ответа
     try:
         response = requests.request("POST", url, headers=headers, data=payload, verify=False)
-        answer = response.json()
-        return json.loads(answer['choices'][0]['message']['content'])["station"]
+        return response.json()["choices"][0]["message"]["content"]
     except requests.RequestException as e:
         # Обработка исключения в случае ошибки запроса
         print(f"Произошла ошибка: {str(e)}")
@@ -115,3 +114,4 @@ def get_lev(metro_data, user_station):
         
     return lev_df.sort_values(by='lev', ascending=False)
 
+#return json.loads(answer['choices'][0]['message']['content'])["station"]
