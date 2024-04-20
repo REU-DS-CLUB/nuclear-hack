@@ -305,10 +305,31 @@ def rename_station(df):
     df['Станция'] = df['Станция'].replace(rename_dict)
     return df
 
+def date_column_change(df):
+    actual_col = []
+    for date_column in df.iloc[:, 3:].columns:
+        date_split = date_column.split('/')
+        if len(date_split[0]) == 1:
+            date_split[0] = f"0{date_split[0]}"
+        if len(date_split[1]) == 1:
+            date_split[1] = f"0{date_split[1]}"
+        actual_date = f"{date_split[1]}-{date_split[0]}-{date_split[2]}"
+        actual_col.append(actual_date)
+
+    df_date_true = pd.DataFrame(df.iloc[:, 3:].values, columns=actual_col)
+    default_columns = df.iloc[:, :3].columns.values
+    df = pd.concat([df[default_columns],  df_date_true], axis=1)
+
+    return df
+
 def preprocessing(df):
     df.rename(columns={'Дата': 'Линия'}, inplace=True)
     df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], keep='first', inplace=True)
     df = rename_station(df)
+    default_columns = df.iloc[:, :3].columns.values
+    reverse_col = df.iloc[:, 3:].columns[::-1].values
+    df = pd.concat([df[default_columns], df[reverse_col]], axis=1) 
+    df = date_column_change(df)   
     return df
 
 
