@@ -1,6 +1,9 @@
 import requests
 import json
 import uuid
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
+import pandas as pd
 
 def get_token(auth_token, scope='GIGACHAT_API_PERS'):
     """
@@ -97,3 +100,18 @@ def get_chat_station(auth_key, user_message):
         # Обработка исключения в случае ошибки запроса
         print(f"Произошла ошибка: {str(e)}")
         return -1
+    
+def get_lev(metro_data, user_station):
+    metro = pd.DataFrame(metro_data)
+    lev_dict_list = []
+    for metro in metro["station"]:
+        lev_dict = {}
+        lev = fuzz.WRatio(metro, user_station)
+        lev_dict["station"] = metro
+        lev_dict["lev"] = lev
+        lev_dict_list.append(lev_dict) 
+
+    lev_df = pd.DataFrame(lev_dict_list)
+        
+    return lev_df.sort_values(by='lev', ascending=False)
+
