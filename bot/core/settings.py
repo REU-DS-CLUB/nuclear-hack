@@ -17,4 +17,4 @@ def get_settings(path: str):
 
     return Settings(bots=Bots(bot_token=env.str("DEV_TOKEN"), admin_id=env.int("ADMIN_ID")))
 
-Setting = get_settings('Confidential')
+Setting = get_settings(r'D:\source\repos\nuclear-hack\bot\Confidential')
