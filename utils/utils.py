@@ -75,7 +75,7 @@ def get_chat_station(auth_key, user_message):
                 "content": user_message  # Содержание сообщения
             }
         ],
-        "temperature": 1,  # Температура генерации
+        "temperature": 0.5,  # Температура генерации
         "top_p": 0.1,  # Параметр top_p для контроля разнообразия ответов
         "n": 1,  # Количество возвращаемых ответов
         "stream": False,  # Потоковая ли передача ответов
@@ -94,10 +94,11 @@ def get_chat_station(auth_key, user_message):
     # Выполнение POST-запроса и возвращение ответа
     try:
         response = requests.request("POST", url, headers=headers, data=payload, verify=False)
-        return response.json()["choices"][0]["message"]["content"]
+        json_string = response.json()
+        return json_string["choices"][0]["message"]["content"]
     except requests.RequestException as e:
         # Обработка исключения в случае ошибки запроса
-        print(f"Произошла ошибка: {str(e)}")
+        print(f"Произошла ошибка: {str(e)}")    
         return -1
     
 def get_lev(metro_data, user_station):
