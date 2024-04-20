@@ -1,4 +1,5 @@
 wandb_secret.txt
+ProxyapiSecret.txt
 /Data
 /__pycache__
 /.DS_store

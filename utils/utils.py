@@ -4,6 +4,7 @@ import uuid
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import pandas as pd
+from openai import OpenAI
 
 def get_token(auth_token, scope='GIGACHAT_API_PERS'):
     """
@@ -45,7 +46,7 @@ def get_token(auth_token, scope='GIGACHAT_API_PERS'):
         return -1
 
 
-def get_chat_station(auth_key, user_message):
+def get_gigachat_message(auth_key, user_message):
     """
     Отправляет POST-запрос к API чата для получения ответа от модели GigaChat.
 
@@ -101,10 +102,44 @@ def get_chat_station(auth_key, user_message):
         print(f"Произошла ошибка: {str(e)}")    
         return -1
     
+
+def get_user_station(auth_key, user_message):
+    task_gigachat = "используя информацию из user_message вычлени название станции метро и отправь его в формате json в виде: {'station' :'название станции из user_message'}"
+    message = f"отправь без комментриаев 'user_message': {user_message},'task':'{task_gigachat}'"
+
+    user_station_json = json.loads(get_gigachat_message(auth_key=auth_key, user_message=message).replace("'", '"'))
+    return user_station_json["station"]
+
+def get_user_dates(api_key, user_message, date_now):
+
+    date_now = '2022-09-01'
+    task_gpt  = """
+    Проанализируй user_message для определения запрашиваемого в сообщении временного интервала учитвая время date_now:
+    1. Выдели начало запрашиваемого периода в формате (ГГГГ-ММ-ДД ЧЧ:ММ). Например для запроса проанализируй пассажиропоток за предыдущий год при текущей дате 2022-09-01 нужно вывести 01.01.2021.
+    2. Выдели конец запрашиваемого периода в формате (ГГГГ-ММ-ДД ЧЧ:ММ). Например для запроса проанализируй пассажиропоток за предыдущий год при текущей дате 2022-09-01 нужно вывести 31.12.2021.
+    В коцне верни json в формате {end_date': 'конец периода','start_date': 'начало периода} без переноса строк'
+    """
+
+    request_gpt = f"date_now: {date_now} , user_massage: {user_message}, task: {task_gpt}"
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.proxyapi.ru/openai/v1",
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",  
+        messages=[{"role": "user", "content": request_gpt}]
+    )
+
+    answer = response.choices[0].message.content
+    answer = answer.replace("'", '"')
+    answer = json.loads(answer)
+    return answer
+    
 def get_lev(metro_data, user_station):
-    metro = pd.DataFrame(metro_data)
     lev_dict_list = []
-    for metro in metro["station"]:
+    for metro in metro_data["Станция"]:
         lev_dict = {}
         lev = fuzz.WRatio(metro, user_station)
         lev_dict["station"] = metro
@@ -113,6 +148,6 @@ def get_lev(metro_data, user_station):
 
     lev_df = pd.DataFrame(lev_dict_list)
         
-    return lev_df.sort_values(by='lev', ascending=False)
+    return lev_df.sort_values(by='lev', ascending=False).head(3)
 
 #return json.loads(answer['choices'][0]['message']['content'])["station"]
