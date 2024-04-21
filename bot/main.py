@@ -4,7 +4,7 @@ import asyncio
 import logging 
 import aiomysql
 
-from core.utils.Confidential import DEV_TOKEN, ADMIN_ID
+from core.bot_utils.Confidential import DEV_TOKEN, ADMIN_ID
 
 from aiogram.fsm.storage.redis import RedisStorage
 from core.handlers.basic import command_cancel, command_file, command_help, command_predict, command_voice, get_document, get_start, get_station_for_predict, get_text, get_voice, select_buttons_command, select_text_command
@@ -12,12 +12,12 @@ from core.handlers.callback import developers, get_predict, predict, select_butt
 
 from aiogram.filters import Command, CommandStart, callback_data
 from aiogram import F
-from core.utils.commands import set_commands
+from core.bot_utils.commands import set_commands
 
 from core.middlewares.dbmiddleware import DBSession
 from aiogram.utils.chat_action import ChatActionMiddleware
 
-from core.utils.statesform import DocumentSteps, PredictSteps, TextSteps, VoiceSteps
+from core.bot_utils.statesform import DocumentSteps, PredictSteps, TextSteps, VoiceSteps
 from datetime import datetime, timedelta
 
 

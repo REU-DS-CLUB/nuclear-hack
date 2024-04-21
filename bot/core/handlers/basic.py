@@ -4,11 +4,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 import json
 from core.keyboards.inline import get_inline_branches, get_inline_check, get_inline_developers, get_inline_start
-from core.utils.dbconnect import Request
-from core.utils.statesform import ButtonsSteps, DocumentSteps, PredictSteps, TextSteps, VoiceSteps
+from core.bot_utils.dbconnect import Request
+from core.bot_utils.statesform import ButtonsSteps, DocumentSteps, PredictSteps, TextSteps, VoiceSteps
 import core.Promts.promt as pt
-import core.utils.request as rq
-
+import core.bot_utils.request as rq
+from core.bot_utils.utils import voice_to_text
 
 
 async def get_start(message: Message, bot: Bot, state: FSMContext):
@@ -85,6 +85,8 @@ async def get_voice(message: Message, bot: Bot, state: FSMContext):
     path = "voices/" + str(file_id) +".oga"
     await bot.download_file(file_path, path)
     
+    text_voice = voice_to_text(path)
+
     # response = await rq.voice(path)
     # if (response.status_code == 200): # type(response) != int and 
     #     await message.answer(f'{response.content.decode("UTF-8")}')

@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMedi
 from core.handlers.basic import get_text
 from core.keyboards.inline import get_inline_branches, get_inline_stations
 from aiogram.fsm.context import FSMContext
-from core.utils.statesform import ButtonsSteps, PredictSteps, TextSteps, VoiceSteps
+from core.bot_utils.statesform import ButtonsSteps, PredictSteps, TextSteps, VoiceSteps
 import core.Promts.promt as pt
     
 async def select_text(call: CallbackQuery, bot: Bot, state: FSMContext):

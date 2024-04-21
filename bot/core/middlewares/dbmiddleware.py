@@ -2,7 +2,7 @@ from aiogram.types import Message, TelegramObject
 from aiogram import BaseMiddleware
 from typing import Callable, Awaitable, Dict, Any
 import aiomysql
-from core.utils.dbconnect import Request
+from core.bot_utils.dbconnect import Request
 
 
 class DBSession(BaseMiddleware):
