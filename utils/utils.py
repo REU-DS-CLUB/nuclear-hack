@@ -313,18 +313,22 @@ def rename_station(df):
 def date_column_change(df):
     actual_col = []
     for date_column in df.iloc[:, 3:].columns:
-        # Проверяем, является ли объект date_column объектом datetime.datetime
-        if isinstance(date_column, pd.Timestamp):
-            # Форматируем дату в формат 'день-месяц-год'
-            formatted_date = date_column.strftime('%Y-%m-%d %H:%M')
-            actual_col.append(str(formatted_date)[:-3])
-        else:
-            # Если это не datetime, используем оригинальное значение столбца
-            actual_col.append(date_column)
+        # Проверяем, является ли объект date_column объектом datetime.datetime или pd.Timestamp
+        if isinstance(date_column, (datetime.datetime, pd.Timestamp)):
+            # Форматируем дату в формат 'год-месяц-день час:минута'
+            formatted_date = date_column
+            # Убираем секунды из строки
+            actual_col.append(formatted_date)
     
     # Обновляем названия столбцов
     df.iloc[:, 3:].columns = actual_col
     return df
+
+def del_last_3_symbols(df):
+    new_columns = [col[:-3] if i >= 2 else col for i, col in enumerate(df.columns)]
+    df.columns = new_columns
+    return df
+
 
 def preprocessing(df):
     df.rename(columns={'Дата': 'Линия'}, inplace=True)
@@ -333,7 +337,9 @@ def preprocessing(df):
     reverse_col = df.iloc[:, 3:].columns[::-1].values
     df = pd.concat([df[default_columns], df[reverse_col]], axis=1)
     df = date_column_change(df)
+    df.columns = [str(col).strip() for col in df.columns]
     df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], inplace=True)
+    df = del_last_3_symbols(df)
     return df
 
 
@@ -402,15 +408,6 @@ def get_db_connect(database, user, password, host, port):
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
 
-   
-def get_data_from_db(query):
-    cursor = connect.cursor()
-    cursor.execute(query)
-    data = cursor.fetchall()
-    cursor.close()
-    return data
-
-
 def catboost_learn():
 
     with open('db_secret.json') as f:
@@ -419,7 +416,7 @@ def catboost_learn():
     print(params)
     
     connect = get_db_connect(**params)
-    data = get_data_from_db(connect, "SELECT * FROM raw")
+    data = pd.read_sql_query("SELECT * FROM raw", connect)
     return data
 
     
