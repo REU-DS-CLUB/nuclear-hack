@@ -1,8 +1,9 @@
 import os
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import FSInputFile, Message
 import json
+from core.utils.features import get_day_plot
 from core.keyboards.inline import get_inline_branches, get_inline_check, get_inline_developers, get_inline_start
 from core.utils.dbconnect import Request
 from core.utils.statesform import ButtonsSteps, DocumentSteps, PredictSteps, TextSteps, VoiceSteps
@@ -109,7 +110,9 @@ async def command_predict(message: Message, bot: Bot, state: FSMContext):
 async def get_station_for_predict(message: Message, bot: Bot, state: FSMContext):
     predict = 0 # API REQUEST
     await message.answer(f"Прогнозируемый пассажиропоток: {predict}")
-    await message.answer("КАРТИНКА")
+    
+    grath = FSInputFile(get_day_plot())
+    await bot.send_photo(message.chat.id, grath, caption="Распределение пассажиропотока по часам")
     await state.clear()
         
     
