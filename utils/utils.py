@@ -412,7 +412,8 @@ def fill_plot_values():
 
 def coef(date, start="00:00", end="23:30"):
 
-    # date = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M').date()
+    if type(date)==str:
+        date = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M').date()
     time_start = datetime.datetime.strptime(start, "%H:%M").time()
     time_end = datetime.datetime.strptime(end, "%H:%M").time()
 
@@ -428,6 +429,14 @@ def coef(date, start="00:00", end="23:30"):
     # ищем индексы с временем
     # index_start = timestamps.index(time_start.strftime('%H:%M'))
     # index_end = timestamps.index(time_end.strftime('%H:%M'))
+    if time_end>datetime.datetime.strptime("23:00", "%H:%M").time():
+        return 1
+    if time_end<datetime.datetime.strptime("4:00", "%H:%M").time():
+        return 0
+    if time_start<datetime.datetime.strptime("4:00", "%H:%M").time():
+        return 1
+    if time_start>datetime.datetime.strptime("23:00", "%H:%M").time():
+        return 0
     index_start = next((i for i, ts in enumerate(timestamps) if ts >= time_start.strftime('%H:%M')), 0)
     index_end = next((i for i, ts in enumerate(timestamps) if ts >= time_end.strftime('%H:%M')), len(timestamps) - 1)
 
@@ -492,7 +501,7 @@ def catboost_learn():
 
 def get_day_plot():
 
-    pred = 80000
+    pred = catboost_learn()
 
     date = datetime.datetime.strptime("2024-04-04", '%Y-%m-%d')
     
@@ -518,6 +527,40 @@ def get_day_plot():
     return 'docs/day_plot.png'
 
 
+
+def coef(date, start="00:00", end="23:30"):
+
+    if type(date)==str:
+        date = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M').date()
+    time_start = datetime.datetime.strptime(start, "%H:%M").time()
+    time_end = datetime.datetime.strptime(end, "%H:%M").time()
+
+    timestamps = form_timelist()
+    workday, weekday = fill_plot_values()
+
+    # в зависимости от дня недели выбираем патерн (выходные или будни)
+    if date.weekday in (5, 6): 
+        values = weekday
+    else:
+        values = workday
+    
+    # ищем индексы с временем
+    # index_start = timestamps.index(time_start.strftime('%H:%M'))
+    # index_end = timestamps.index(time_end.strftime('%H:%M'))
+    if time_end>datetime.datetime.strptime("23:00", "%H:%M").time():
+        return 1
+    if time_end<datetime.datetime.strptime("4:00", "%H:%M").time():
+        return 0
+    if time_start<datetime.datetime.strptime("4:00", "%H:%M").time():
+        return 1
+    if time_start>datetime.datetime.strptime("23:00", "%H:%M").time():
+        return 0
+    index_start = next((i for i, ts in enumerate(timestamps) if ts >= time_start.strftime('%H:%M')), 0)
+    index_end = next((i for i, ts in enumerate(timestamps) if ts >= time_end.strftime('%H:%M')), len(timestamps) - 1)
+
+    return sum(values[index_start:index_end + 1]) / sum(values)
+
+
 def calculate_traffic(dates, station):
 
     station_name = station[0]
@@ -527,14 +570,17 @@ def calculate_traffic(dates, station):
 
     start_time = start_date.split(' ')[1]
     end_time = end_date.split(' ')[1]
-    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M').date()
-    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M').date()
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
     current_date = start_date
 
     result = 0
 
-    connect = get_connection()
-    data = pd.read_sql_query("SELECT * FROM test10_temp", connect)
+    with get_connection() as cnn:
+        with cnn.cursor() as cur:
+            cur.execute("SELECT * FROM raw")
+            data = cur.fetchall()   
+            data = pd.DataFrame(data)
 
     while current_date <= end_date:
         current_date.strftime('%Y-%m-%d %H:%M')
@@ -549,7 +595,8 @@ def calculate_traffic(dates, station):
             hour_coef = coef(current_date, end=end_time)
             
         # просчитываем количество пассажиров за текущий день
-        day_traffic = data.loc[(data["Станция"] == station_name) & (data["Линия"] == line), datetime.datetime.strptime(str(current_date), "%Y-%m-%d").strftime("%d/%m/%Y")].values[0]
+        print(current_date)
+        day_traffic = data.loc[data["Станция"] == station_name].iloc[0][str(current_date)[:-3]]
         result += day_traffic * hour_coef
 
         current_date += timedelta(days=1)
