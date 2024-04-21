@@ -1,3 +1,4 @@
+import os
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -30,7 +31,7 @@ async def get_text(message: Message, bot: Bot, state: FSMContext):
             await message.answer(f"Я не смог корректно обработать твой запрос. Пожалуйста, попробуй еще раз позже")
             await state.clear()
         else:
-            await message.answer(f"Выбранная станция {get_possible_stations[check_station]} - Верно?", reply_markup=get_inline_check())
+            await message.answer(f"Выбранная станция {get_possible_stations[str(check_station)]} - Верно?", reply_markup=get_inline_check())
 
     await state.set_state(TextSteps.IS_CORRECT)
     
@@ -58,15 +59,14 @@ async def get_document(message: Message, bot: Bot):
     file_name, file_type = message.document.file_name.split(".")
     
     if (file_type == "csv" or file_type == "xlsx"):
-        await message.answer(f'Отлично, ты отправил докумет! Я добавлю его в данные.')
+        await message.answer(f'Отлично, ты отправил документ! Я добавлю его в данные.')
         path = 'documents/' + str(file.file_id) + "." + file_type
         await bot.download_file(file.file_path, path)
-        response = rq.document(name=file_name, path=path)
-        temp = "b\'\"" + file_name + "\"\'"
-        if (response == file_name.byte()):
+        response = await rq.document(name=file_name, path=path)
+        if (response.status_code == 200):
             await message.answer('Успешно добавлено')
-        elif (response == temp):
-            await message.answer('Успешно 2')
+            if (os.path.exists(path=path)):
+                os.remove(path=path)
         else:
             await message.answer('Произошла ошибка, попробуйте позже')
 
@@ -85,13 +85,26 @@ async def get_voice(message: Message, bot: Bot, state: FSMContext):
     file_path = file.file_path
     path = "voices/" + str(file_id) +".oga"
     await bot.download_file(file_path, path)
-    response = rq.voice(path)
+    
+    response = await rq.voice(path)
+    if (response.status_code == 200): # type(response) != int and 
+        await message.answer(f'{response.content.decode("UTF-8")}')
+        print(response.content)
         
-    get_possible_stations = ['1', '2', '3'] # Здесь обращаюсь к предварительной АПИ функции Темы и получаю массив из 3 версий
-    await state.update_data(possible_stations = get_possible_stations)
-    await state.update_data(check_station = 0)
-    await message.answer(f"Выбранная станция {get_possible_stations[0]} - Верно?", reply_markup=get_inline_check())
-    await state.set_state(TextSteps.IS_CORRECT)
+        get_possible_stations = response.content #json
+        if (os.path.exists(path=path)):
+                os.remove(path=path)
+        await state.update_data(possible_stations = get_possible_stations)
+        await state.update_data(check_station = 0)
+        await message.answer(f"Выбранная станция {get_possible_stations['0']} - Верно?", reply_markup=get_inline_check())
+        await state.set_state(TextSteps.IS_CORRECT)
+    else:
+        await message.answer('Произошла ошибка, попробуйте позже')
+        await state.clear()
+    
+    
+        
+    
 
     
     
