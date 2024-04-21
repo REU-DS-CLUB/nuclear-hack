@@ -24,9 +24,9 @@ def fill_plot_values():
     
     return work, rest
 
-def get_day_plot():
+def get_day_plot(predict):
 
-    pred = 80000
+    pred = predict
 
     date = datetime.datetime.strptime("2024-04-04", '%Y-%m-%d')
     
@@ -50,3 +50,22 @@ def get_day_plot():
     plt.savefig('docs/day_plot.png')
 
     return 'docs/day_plot.png'
+
+def max_start_and_min_date():
+    min_data = "2024-01-01 00:00"
+    max_date = "2024-04-03 00:00"
+    return max_date, min_data
+
+def validate_date(end_date, start_date):
+    end_date = datetime.datetime.strptime(str(end_date), '%Y-%m-%d %H:%M')
+    start_date = datetime.datetime.strptime(str(start_date), '%Y-%m-%d %H:%M')
+    max_date, min_data = max_start_and_min_date()
+    max_date = datetime.datetime.strptime(str(max_date), '%Y-%m-%d %H:%M')
+    min_data = datetime.datetime.strptime(str(min_data), '%Y-%m-%d %H:%M')
+
+    if (end_date > max_date):
+        return False
+    elif (start_date < min_data):
+        return False
+    else:
+        return True

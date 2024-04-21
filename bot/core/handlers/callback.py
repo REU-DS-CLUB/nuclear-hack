@@ -5,6 +5,7 @@ from core.keyboards.inline import get_inline_branches, get_inline_stations
 from aiogram.fsm.context import FSMContext
 from core.utils.statesform import ButtonsSteps, PredictSteps, TextSteps, VoiceSteps
 import core.Promts.promt as pt
+import core.utils.request as rq
     
 async def select_text(call: CallbackQuery, bot: Bot, state: FSMContext):
     await call.message.answer("Введи свой запрос в свободной текстовой форме:")
@@ -70,9 +71,17 @@ async def select_check(call: CallbackQuery, bot: Bot, state: FSMContext):
     context_data = await state.get_data()
     if (call.data.endswith('yes')):
         right_station = context_data.get("possible_stations")[str(context_data.get("check_station"))]
-        predict = "фикция от " + str(right_station) # здесь типо получаю предикт
-        await call.message.answer(f"Предсказание - {predict}")
-        await state.clear()
+        dates = context_data.get("dates")
+        
+
+        response_predict = await rq.prediction(station=right_station, dates=dates)
+        if (response_predict.status_code == 200):
+            response_predict = response_predict.content.decode('UTF-8').replace("'","").replace('"',"")
+            await call.message.answer(f"Пассажиропоток - {response_predict}")
+            await state.clear()
+        else:
+            await call.message.answer("Ошибка на сервере получения пассажиропотока")
+            await state.clear()
     if (call.data.endswith('no')):
         check_station_new = int(context_data.get('check_station')) + 1
         await state.update_data(check_station = check_station_new)

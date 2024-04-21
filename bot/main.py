@@ -1,4 +1,5 @@
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 import asyncio
 import logging 
@@ -55,7 +56,7 @@ async def start():
     # dp.update.middleware.register(DBSession(pool_connect))
     dp.message.middleware.register(ChatActionMiddleware())
 
-
+    dp.message.register(command_cancel, Command(commands='cancel'))
     dp.message.register(get_start, Command(commands='start'))  # CommandStart()
     
     dp.message.register(select_text_command, Command(commands='text'))
@@ -85,7 +86,7 @@ async def start():
     dp.message.register(command_predict, Command(commands='predict'))
     dp.callback_query.register(get_predict, F.data.contains("predict"))
     dp.message.register(command_help, Command(commands='help'))
-    dp.message.register(command_cancel, Command(commands='cancel'))
+    
     
     dp.callback_query.register(developers, F.data.contains("developers"))    
 
@@ -95,6 +96,13 @@ async def start():
 
     try:
         await dp.start_polling(bot)
+    except:
+        print("*"*10 + "CRITICAL ERROR" + "*"*10)
+        await bot.session.close()
+        try:
+            await dp.start_polling(bot)
+        finally:
+            await bot.session.close()
     finally:
         await bot.session.close()
 
