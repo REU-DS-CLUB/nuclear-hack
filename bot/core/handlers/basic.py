@@ -85,20 +85,20 @@ async def get_voice(message: Message, bot: Bot, state: FSMContext):
     path = "voices/" + str(file_id) +".oga"
     await bot.download_file(file_path, path)
     
-    response = await rq.voice(path)
-    if (response.status_code == 200): # type(response) != int and 
-        await message.answer(f'{response.content.decode("UTF-8")}')
-        print(response.content)
+    # response = await rq.voice(path)
+    # if (response.status_code == 200): # type(response) != int and 
+    #     await message.answer(f'{response.content.decode("UTF-8")}')
+    #     print(response.content)
         
-        get_possible_stations = response.content #json
+    #     get_possible_stations = response.content #json
         
-        await state.update_data(possible_stations = get_possible_stations)
-        await state.update_data(check_station = 0)
-        await message.answer(f"Выбранная станция {get_possible_stations['0']} - Верно?", reply_markup=get_inline_check())
-        await state.set_state(TextSteps.IS_CORRECT)
-    else:
-        await message.answer('Произошла ошибка, попробуйте позже')
-        await state.clear()
+    #     await state.update_data(possible_stations = get_possible_stations)
+    #     await state.update_data(check_station = 0)
+    #     await message.answer(f"Выбранная станция {get_possible_stations['0']} - Верно?", reply_markup=get_inline_check())
+    #     await state.set_state(TextSteps.IS_CORRECT)
+    # else:
+    #     await message.answer('Произошла ошибка, попробуйте позже')
+    #     await state.clear()
     if (os.path.exists(path=path)):
                 os.remove(path=path)
     
