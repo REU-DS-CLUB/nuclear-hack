@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMedi
 from core.handlers.basic import get_text
 from core.keyboards.inline import get_inline_branches, get_inline_stations
 from aiogram.fsm.context import FSMContext
-from core.utils.statesform import ButtonsSteps, TextSteps, VoiceSteps
+from core.utils.statesform import ButtonsSteps, PredictSteps, TextSteps, VoiceSteps
 import core.Promts.promt as pt
     
 async def select_text(call: CallbackQuery, bot: Bot, state: FSMContext):
@@ -82,9 +82,8 @@ async def select_check(call: CallbackQuery, bot: Bot, state: FSMContext):
     await call.answer()
 
 async def get_predict(call: CallbackQuery, bot: Bot, state: FSMContext):
-    predict = "predict" # обращение к API за предиктом
-    await call.message.answer(f"Вычисленный пассажиропоток: {predict}")
-    await state.clear()
+    await call.message.answer("На какой станции нужно предсказать пассажиропоток на завтра?")
+    await state.set_state(PredictSteps.GET_STATION)
 
     await call.answer()
 

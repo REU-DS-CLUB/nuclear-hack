@@ -1,7 +1,7 @@
 import requests
 
 async def document(name: str, path: str):
-    url = f"http://213.189.219.51:8000/handlers/file/{name}"
+    url = f"http://80.87.107.22:8002/handlers/file/{name}"
     
     file =  open(path, "rb")
     FF = {"file" : file}
@@ -16,13 +16,13 @@ async def document(name: str, path: str):
     return response
 
 async def voice(path: str):
-    url = f"http://213.189.219.51:8000/handlers/audio_prev"
+    url = f"http://80.87.107.22:8002/handlers/audio_prev"
     
     file =  open(path, "rb")
     FF = {"file" : file}
 
     try:
-        response = await requests.get(url, files=FF, verify= False) 
+        response = requests.get(url, files=FF, verify= False) 
     except:
         print("Ошибка в request.voice()")
     print(response)
@@ -30,12 +30,11 @@ async def voice(path: str):
     
 
 def text(text: str):
-    url = f"http://213.189.219.51:8000/handlers/audio_prev"
+    url = f"http://80.87.107.22:8002/handlers/audio_prev"
 
     try:
         response = requests.get(url, verify= False)
     except:
         print("Ошибка в request.text()")
-        return -1
     print(response)
     return response

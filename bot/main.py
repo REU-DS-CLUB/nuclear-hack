@@ -7,7 +7,7 @@ import aiomysql
 from core.utils.Confidential import DEV_TOKEN, ADMIN_ID
 
 from aiogram.fsm.storage.redis import RedisStorage
-from core.handlers.basic import command_cancel, command_file, command_help, command_predict, command_voice, get_document, get_start, get_text, get_voice, select_buttons_command, select_text_command
+from core.handlers.basic import command_cancel, command_file, command_help, command_predict, command_voice, get_document, get_start, get_station_for_predict, get_text, get_voice, select_buttons_command, select_text_command
 from core.handlers.callback import developers, get_predict, predict, select_buttons, select_check, select_station, select_text, select_voice
 
 from aiogram.filters import Command, CommandStart, callback_data
@@ -17,7 +17,7 @@ from core.utils.commands import set_commands
 from core.middlewares.dbmiddleware import DBSession
 from aiogram.utils.chat_action import ChatActionMiddleware
 
-from core.utils.statesform import DocumentSteps, TextSteps, VoiceSteps
+from core.utils.statesform import DocumentSteps, PredictSteps, TextSteps, VoiceSteps
 from datetime import datetime, timedelta
 
 
@@ -77,6 +77,7 @@ async def start():
     
     dp.message.register(get_document, F.document, DocumentSteps.GET_DOCUMENT)
     dp.message.register(get_voice, F.voice, VoiceSteps.GET_VOICE)
+    dp.message.register(get_station_for_predict, PredictSteps.GET_STATION)
     
     dp.message.register(command_file, Command(commands='file'))
     dp.message.register(command_voice, Command(commands='voice'))
