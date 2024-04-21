@@ -11,6 +11,8 @@ ProxyapiSecret.txt
 /bot/core/__pycache__
 */__pycache__
 
+gigachat.ipynb
+metro_parsing.ipynb
+
 algos.ipynb
 distribution.ipynb
-metro_parsing.ipynb
