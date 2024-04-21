@@ -1,3 +1,4 @@
+from debugpy import connect
 from numpy import column_stack
 import requests
 import json
@@ -400,5 +401,17 @@ def get_db_connect(database, user, password, host, port):
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
 
-def add_feature(df):
-    pass
+def catboost_learn():
+    params = {
+        "database": "postgres",
+        "user": "user",
+        "password": "",
+        "port": "5432",
+        "host": "213.189.219.51"
+
+    }
+    connect = get_db_connect(**params)
+    if connect:
+        print("коннект")
+    cursor = connect.cursor()
+    
