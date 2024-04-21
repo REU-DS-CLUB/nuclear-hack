@@ -430,6 +430,7 @@ def get_db_connect():
 
     with open('utils/db_secret.json') as f:
         params = json.load(f)
+
     try:
         connection = psycopg2.connect(**params)
         print("Подключение к базе данных успешно установлено")
