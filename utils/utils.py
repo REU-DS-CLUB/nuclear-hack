@@ -14,6 +14,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor
 import psycopg2
+import matplotlib.pyplot as plt
 
 def get_token(auth_token, scope='GIGACHAT_API_PERS'):
     """
@@ -407,9 +408,37 @@ def get_db_connect():
         return None
 
 
+
+
+
 def catboost_learn():
     connect = get_db_connect()
     data = pd.read_sql_query("SELECT * FROM raw", connect)
     return data
 
+
+
+def get_day_plot():
+
+    pred = 80000
+
+    date = datetime.datetime.strptime("2024-04-04", '%Y-%m-%d')
     
+    timestamps = form_timelist()
+    workday, weekday = fill_plot_values()
+
+    if date.weekday in (5, 6): 
+        x = [i / sum(workday) * pred for i in weekday] 
+    else:
+        x = [i / sum(workday) * pred for i in workday] 
+    
+    
+    plt.figure(figsize=(15, 6))
+    plt.plot(timestamps, x, color='b', marker='o')
+    plt.xlabel('Время')
+    plt.ylabel('Количество пассажиров')
+    plt.title('Пассажиропоток')
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.show()
