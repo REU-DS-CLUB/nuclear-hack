@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import timedelta
 
-# from datetime import datetime
-# from psycopg import connect
-# from psycopg.rows import dict_row
-import psycopg2
+from datetime import datetime
+from psycopg import connect
+from psycopg.rows import dict_row
+
 
 
 def max_start_and_min_date(df):
@@ -213,9 +213,6 @@ def validate_date(end_date, start_date):
     else:
         return True
 
-    
-
-    
 def get_gigachat_message(auth_key, user_message):
     """
     Отправляет POST-запрос к API чата для получения ответа от модели GigaChat.
@@ -342,7 +339,7 @@ def rename_station(df):
 
 
 def del_last_3_symbols(df):
-    new_columns = [col[:-3] if i >= 3 else col for i, col in enumerate(df.columns)]
+    new_columns = [col[:-3] if i >= 4 else col for i, col in enumerate(df.columns)]
     df.columns = new_columns
     return df
 
@@ -437,20 +434,6 @@ def coef(date, start="00:00", end="23:30"):
     return sum(values[index_start:index_end + 1]) / sum(values)
 
 
-def get_db_connect():
-
-    with open('utils/db_secret.json') as f:
-        params = json.load(f)
-
-    try:
-        connection = psycopg2.connect(**params)
-        print("Подключение к базе данных успешно установлено")
-        return connection
-    except psycopg2.OperationalError as e:
-        print("Произошла ошибка при подключении к базе данных:", e)
-        return None
-
-
 def get_connection():
 
     POSTGRES_HOST='80.87.107.22'
@@ -484,23 +467,26 @@ def catboost_learn():
             data = cur.fetchall()   
             
             data = pd.DataFrame(data)
-    #stations = get_metro_json()
-    #data = merge_stations(data, stations)
-    #data.drop(columns=['railway_station', 'station_id', 'line', 'station'], inplace=True)
-    """
+
     
     X = data.iloc[:, :-1]
     y = data.iloc[:, -1]
 
-    cat_features = ['Станция', 'Номер линии', 'Линия']
-    model = CatBoostRegressor(iterations=1000, learning_rate=0.1, depth=10, cat_features=cat_features)
+    default = X.iloc[:, :3]
+    changeable = X.iloc[:, 4:]
+    changeable.columns = range(len(changeable.columns))
+
+    X = pd.concat([default, changeable], axis=1)
+    model = CatBoostRegressor(iterations=100, depth=10, learning_rate=0.1, loss_function='RMSE', verbose=0, cat_features=default.columns.values)
     model.fit(X, y)
 
-    predictions = model.predict(X[:, 1:])
-    res = {X.columns[i]: predictions[i] for i in range(len(predictions))}
-    """
+    changeable.drop(0, axis=1, inplace=True)
+    new_value = model.predict(X)
 
-    return data
+    changeable.columns = range(len(changeable.columns))
+    changeable[len(changeable.columns)] = new_value
+
+    return model.predict(X)
                 
 
 
