@@ -12,7 +12,7 @@ from catboost import CatBoostRegressor
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from datetime import datetime
+# from datetime import datetime
 from psycopg import connect
 from psycopg.rows import dict_row
 import psycopg2
