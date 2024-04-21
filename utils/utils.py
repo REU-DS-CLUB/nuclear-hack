@@ -406,13 +406,6 @@ def get_db_connect(database, user, password, host, port):
     except psycopg2.OperationalError as e:
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
-    
-def get_data_from_db(connect, query):
-    cursor = connect.cursor()
-    cursor.execute(query)
-    data = cursor.fetchall()
-    cursor.close()
-    return data
 
 def catboost_learn():
     params = {
