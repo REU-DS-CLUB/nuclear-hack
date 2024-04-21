@@ -17,6 +17,11 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor
 import psycopg2
 
+def max_start_and_min_date(df):
+    min_data = "2024-01-01 00:00"
+    max_date = "2024-04-03 00:00"
+    return max_date, min_data
+
 def get_token(auth_token, scope='GIGACHAT_API_PERS'):
     """
       Выполняет POST-запрос к эндпоинту, который выдает токен.
@@ -191,6 +196,23 @@ def voice_to_text(voice: str):
         print("Проблема при осуществулении доступа к SalutSpeech Token")
         
 # voice_to_text(r"D:\source\repos\nuclear-hack\voiceAwACAgIAAxkBAAOCZiPvdXpCGkUtba9TPn4OWxF_BsEAAkxHAAJjiCBJJThFtRFabo00BA.oga")
+
+def validate_date(end_date, start_date):
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
+    max_date, min_data = max_start_and_min_date()
+    max_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
+    min_data = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
+
+    if (end_date > max_date):
+        return False
+    elif (start_date < min_data):
+        return False
+    else:
+        return True
+
+    
+
     
 def get_gigachat_message(auth_key, user_message):
     """
