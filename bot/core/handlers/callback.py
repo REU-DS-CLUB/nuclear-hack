@@ -1,9 +1,10 @@
 from aiogram import Bot
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMediaVideo
 from core.handlers.basic import get_text
 from core.keyboards.inline import get_inline_branches, get_inline_stations
 from aiogram.fsm.context import FSMContext
 from core.utils.statesform import ButtonsSteps, TextSteps, VoiceSteps
+import core.Promts.promt as pt
     
 async def select_text(call: CallbackQuery, bot: Bot, state: FSMContext):
     await call.message.answer("Введи свой запрос в свободной текстовой форме:")
@@ -81,10 +82,13 @@ async def select_check(call: CallbackQuery, bot: Bot, state: FSMContext):
     await call.answer()
 
 async def developers(call: CallbackQuery, bot: Bot, state: FSMContext):
-    await call.message.answer("Данный проект, состоящий из телеграм бота, обработки естественного языка в тексте и аудио, ML модели, базы данных и API " \
-                              "был создан за 24 часа на хакатоне \"Nuclear IT Hack 2024\" командой разработчиков: " \
-                             "Пашинская Пелагея, Ворогушин Максим, Иванов Александр, Мичурин Артем")
+    await call.message.answer(pt.about_developers)
     # Потом добавлю сюда же вывод общей фотографии команды
+    photo_before = InputMediaPhoto(type='photo', media=FSInputFile(r"bot/core/utils/DSC_before.jpg"), caption="DSC в начале Хакатона")
+    #video_before = InputMediaVideo(type='video', media=FSInputFile(r"bot/core/utils/DSC_before.mp4"), caption="DSC в начале Хакатона")
+    media = [photo_before]
+    await bot.send_media_group(call.message.chat.id, media)
+
     await call.answer()
     
     
