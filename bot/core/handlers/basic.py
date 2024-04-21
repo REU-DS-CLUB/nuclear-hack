@@ -1,8 +1,9 @@
 import os
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import FSInputFile, Message
 import json
+from core.utils.features import get_day_plot, validate_date
 from core.keyboards.inline import get_inline_branches, get_inline_check, get_inline_developers, get_inline_start
 from core.utils.dbconnect import Request
 from core.utils.statesform import ButtonsSteps, DocumentSteps, PredictSteps, TextSteps, VoiceSteps
@@ -20,20 +21,51 @@ async def get_text(message: Message, bot: Bot, state: FSMContext):
     context_data = await state.get_data()
     if (context_data.get('possible_stations') == None):
         await message.answer(f"Отправляю запрос на массив вариантов по тексту: {context_data.get('text')}")
-        get_possible_stations = ['1', '2', '3'] # Здесь обращаюсь к предварительной АПИ функции Темы и получаю массив из 3 версий
-        await state.update_data(possible_stations = get_possible_stations)
-        await state.update_data(check_station = 0)
-        await message.answer(f"Выбранная станция {get_possible_stations[0]} - Верно?", reply_markup=get_inline_check())
-    else:
-        check_station = int(context_data.get('check_station'))
-        get_possible_stations = context_data.get("possible_stations")
-        if (check_station > 2):
-            await message.answer(f"Я не смог корректно обработать твой запрос. Пожалуйста, попробуй еще раз позже")
-            await state.clear()
-        else:
-            await message.answer(f"Выбранная станция {get_possible_stations[str(check_station)]} - Верно?", reply_markup=get_inline_check())
+        
+        response = await rq.user_text(str(message.text))
+        print(str(message.text))
+        if (response.status_code == 200): # type(response) != int and 
+            json_text = response.json()
+            # json_text2 = json.loads(response.content.decode('UTF-8'))
+            # await message.answer(f'{response.content.decode("UTF-8")}')        
+        
+            json_lev = json_text[0].replace("'",'"')
+            json_lev = json.loads(json_lev)
+            print(json_lev)
+        
+            json_date = json_text[1]
+            print(json_date)
+            
+            if (not validate_date(json_date["end_date"], json_date["start_date"])):
+                await message.answer("Можно узнавать пассажиропоток только с 2024-01-01 00:00 по 2024-04-03 00:00")
+                await state.clear()
+                return 
 
-    await state.set_state(TextSteps.IS_CORRECT)
+            get_possible_stations = json_lev #json
+        
+            await state.update_data(dates = json_date)
+            await state.update_data(possible_stations = get_possible_stations)
+            await state.update_data(check_station = 0)
+            await message.answer(f"Выбранная станция {get_possible_stations['0'][0]} ветки {get_possible_stations['0'][1]} - Верно?", reply_markup=get_inline_check())
+            await state.set_state(TextSteps.IS_CORRECT)
+        else:
+            await message.answer('Произошла ошибка, попробуйте позже')
+            await state.clear()
+
+    else:
+        if (context_data.get("check_station") != None):
+            check_station = int(context_data.get('check_station'))
+            get_possible_stations = context_data.get("possible_stations")
+            if (check_station > 2):
+                await message.answer(f"Я не смог корректно обработать твой запрос. Пожалуйста, попробуй еще раз позже")
+                await state.clear()
+            else:
+                await message.answer(f"Выбранная станция {get_possible_stations['0'][0]} ветки {get_possible_stations['0'][1]} - Верно?", reply_markup=get_inline_check())
+            await state.set_state(TextSteps.IS_CORRECT)
+        else:
+            state.clear()
+        
+
     
 async def select_buttons_command(message: Message, bot: Bot, state: FSMContext):
     await state.set_state(ButtonsSteps.CHOOSING_BRANCH)
@@ -87,29 +119,51 @@ async def get_voice(message: Message, bot: Bot, state: FSMContext):
     
     response = await rq.voice(path)
     if (response.status_code == 200): # type(response) != int and 
-        await message.answer(f'{response.content.decode("UTF-8")}')
-        print(response.content)
+        json_text = response.json()
+        # json_text2 = json.loads(response.content.decode('UTF-8'))
+        # await message.answer(f'{response.content.decode("UTF-8")}')        
         
-        get_possible_stations = response.content #json
+        json_lev = json_text[0].replace("'",'"')
+        json_lev = json.loads(json_lev)
+        print(json_lev)
         
+        json_date = json_text[1]
+        print(json_date)
+        
+        if (not validate_date(json_date["end_date"], json_date["start_date"])):
+            await message.answer("Можно узнавать пассажиропоток только с 2024-01-01 00:00 по 2024-04-03 00:00")
+            await state.clear()
+            return 
+
+        get_possible_stations = json_lev #json
+        
+        await state.update_data(dates = json_date)
         await state.update_data(possible_stations = get_possible_stations)
         await state.update_data(check_station = 0)
-        await message.answer(f"Выбранная станция {get_possible_stations['0']} - Верно?", reply_markup=get_inline_check())
+        await message.answer(f"Выбранная станция {get_possible_stations['0'][0]} ветки {get_possible_stations['0'][1]} - Верно?", reply_markup=get_inline_check())
         await state.set_state(TextSteps.IS_CORRECT)
     else:
         await message.answer('Произошла ошибка, попробуйте позже')
         await state.clear()
     if (os.path.exists(path=path)):
-                os.remove(path=path)
+        os.remove(path=path)
     
 async def command_predict(message: Message, bot: Bot, state: FSMContext):
     await message.answer("На какой станции нужно предсказать пассажиропоток на завтра?")
     await state.set_state(PredictSteps.GET_STATION)
     
 async def get_station_for_predict(message: Message, bot: Bot, state: FSMContext):
-    predict = 0 # API REQUEST
-    await message.answer(f"Прогнозируемый пассажиропоток: {predict}")
-    await message.answer("КАРТИНКА")
+    
+    response = await rq.text_to_predict(str(message.text))
+    print(str(message.text))
+    if (response.status_code == 200): # type(response) != int and 
+        predict = int(response.content.decode('UTF-8').replace("'","").replace('"',""))
+        await message.answer(f"Прогнозируемый пассажиропоток: {predict}")
+        grath = FSInputFile(get_day_plot(predict))
+        await bot.send_photo(message.chat.id, grath, caption="Распределение пассажиропотока по часам")
+    else:
+        await message.answer('Произошла ошибка, попробуйте позже')
+     
     await state.clear()
         
     
