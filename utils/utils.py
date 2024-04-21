@@ -373,7 +373,7 @@ def coef(date, start="00:00", end="23:30"):
     workday, weekday = fill_plot_values()
 
     # в зависимости от дня недели выбираем патерн (выходные или будни)
-    if date.weekday in (5, 6):
+    if date.weekday in (5, 6): 
         values = weekday
     else:
         values = workday
