@@ -8,3 +8,10 @@ ProxyapiSecret.txt
 /wandb
 /.vs
 /utils/__pycache__
+/bot/core/__pycache__
+
+gigachat.ipynb
+metro_parsing.ipynb
+
+algos.ipynb
+distribution.ipynb

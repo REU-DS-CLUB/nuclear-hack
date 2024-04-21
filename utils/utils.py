@@ -1,4 +1,4 @@
-from tkinter import W
+from debugpy import connect
 from numpy import column_stack
 import requests
 import json
@@ -10,6 +10,10 @@ from openai import OpenAI
 import datetime
 import os
 import time
+from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import train_test_split
+from catboost import CatBoostRegressor
+import psycopg2
 
 def get_token(auth_token, scope='GIGACHAT_API_PERS'):
     """
@@ -305,10 +309,32 @@ def rename_station(df):
     df['Станция'] = df['Станция'].replace(rename_dict)
     return df
 
+
+def date_column_change(df):
+    actual_col = []
+    for date_column in df.iloc[:, 3:].columns:
+        # Проверяем, является ли объект date_column объектом datetime.datetime
+        if isinstance(date_column, pd.Timestamp):
+            # Форматируем дату в формат 'день-месяц-год'
+            formatted_date = date_column.strftime('%d-%m-%Y')
+            actual_col.append(str(formatted_date)[:-3])
+        else:
+            # Если это не datetime, используем оригинальное значение столбца
+            actual_col.append(date_column)
+    
+    # Обновляем названия столбцов
+    df.iloc[:, 3:].columns = actual_col
+    return df
+
 def preprocessing(df):
     df.rename(columns={'Дата': 'Линия'}, inplace=True)
-    df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], keep='first', inplace=True)
     df = rename_station(df)
+    default_columns = df.iloc[:, :3].columns.values
+    reverse_col = df.iloc[:, 3:].columns[::-1].values
+    df = pd.concat([df[default_columns], df[reverse_col]], axis=1) 
+    df = date_column_change(df)
+    df.columns = [str(col).strip() for col in df.columns]
+    df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], inplace=True)
     return df
 
 
@@ -340,6 +366,7 @@ def fill_plot_values():
 
 def coef(date, start="00:00", end="23:30"):
 
+    # date = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M').date()
     time_start = datetime.datetime.strptime(start, "%H:%M").time()
     time_end = datetime.datetime.strptime(end, "%H:%M").time()
 
@@ -347,13 +374,51 @@ def coef(date, start="00:00", end="23:30"):
     workday, weekday = fill_plot_values()
 
     # в зависимости от дня недели выбираем патерн (выходные или будни)
-    if date.weekday in (5, 6):
+    if date.weekday in (5, 6): 
         values = weekday
     else:
         values = workday
     
     # ищем индексы с временем
-    index_start = timestamps.index(time_start.strftime('%H:%M'))
-    index_end = timestamps.index(time_end.strftime('%H:%M'))
+    # index_start = timestamps.index(time_start.strftime('%H:%M'))
+    # index_end = timestamps.index(time_end.strftime('%H:%M'))
+    index_start = next((i for i, ts in enumerate(timestamps) if ts >= time_start.strftime('%H:%M')), 0)
+    index_end = next((i for i, ts in enumerate(timestamps) if ts >= time_end.strftime('%H:%M')), len(timestamps) - 1)
 
     return sum(values[index_start:index_end + 1]) / sum(values)
+
+def get_db_connect(database, user, password, host, port):
+    try:
+        connection = psycopg2.connect(
+            database=database,
+            user=user,
+            password=password,
+            host=host,
+            port=port
+        )
+        print("Подключение к базе данных успешно установлено")
+        return connection
+    except psycopg2.OperationalError as e:
+        print("Произошла ошибка при подключении к базе данных:", e)
+        return None
+    
+def get_data_from_db(connect, query):
+    cursor = connect.cursor()
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    return data
+
+def catboost_learn():
+    params = {
+        "database": "hack",
+        "user": "user",
+        "password": "password",
+        "port": "5432",
+        "host": "213.189.219.51"}
+    
+    connect = get_db_connect(**params)
+    data = get_data_from_db(connect, "SELECT * FROM raw")
+    return data
+
+    
