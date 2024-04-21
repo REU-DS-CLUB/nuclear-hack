@@ -8,15 +8,13 @@ from openai import OpenAI
 import datetime
 import os
 import time
-from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 from psycopg import connect
 from psycopg.rows import dict_row
-import psycopg2
+
 
 
 def max_start_and_min_date(df):
@@ -341,14 +339,6 @@ def rename_station(df):
     return df
 
 
-def date_column_change(df):
-    actual_col = []
-    for date_column in df.iloc[:, 3:].columns:
-        actual_col.append(date_column)
-
-    df.iloc[:, 3:].columns = actual_col
-    return df
-
 def del_last_3_symbols(df):
     new_columns = [col[:-3] if i >= 3 else col for i, col in enumerate(df.columns)]
     df.columns = new_columns
@@ -391,13 +381,13 @@ def preprocessing(df):
     default_columns = df.iloc[:, :3].columns.values
     reverse_col = df.iloc[:, 3:].columns[::-1].values
     df = pd.concat([df[default_columns], df[reverse_col]], axis=1)
-    df = date_column_change(df)
+    #df = date_column_change(df)
     df.columns = [str(col).strip() for col in df.columns]
     df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], inplace=True)
     df = del_last_3_symbols(df)
     return df
 
-# HOUR DISTRIBUTION COEF
+
 def form_timelist():
     # задаем начальную точку
     current_time = datetime.time(0, 0)
@@ -444,20 +434,6 @@ def coef(date, start="00:00", end="23:30"):
 
     return sum(values[index_start:index_end + 1]) / sum(values)
 
-
-def get_db_connect():
-
-    with open('utils/db_secret.json') as f:
-        params = json.load(f)
-
-    try:
-        connection = psycopg2.connect(**params)
-        print("Подключение к базе данных успешно установлено")
-        return connection
-    except psycopg2.OperationalError as e:
-        print("Произошла ошибка при подключении к базе данных:", e)
-        return None
-
 def get_connection():
 
     POSTGRES_HOST='80.87.107.22'
@@ -484,17 +460,13 @@ def get_connection():
     return cnn
 
 
-
-
-
-
 def catboost_learn():
     with get_connection() as cnn:
         with cnn.cursor() as cur:
             cur.execute("SELECT * FROM raw")
             data = cur.fetchall()   
             
-            data = preprocessing(pd.DataFrame(data))
+            data = pd.DataFrame(data)
     #stations = get_metro_json()
     #data = merge_stations(data, stations)
     #data.drop(columns=['railway_station', 'station_id', 'line', 'station'], inplace=True)
