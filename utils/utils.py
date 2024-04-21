@@ -1,7 +1,3 @@
-from codecs import ascii_encode
-from nis import cat
-from debugpy import connect
-from numpy import column_stack
 import requests
 import json
 import uuid
@@ -15,7 +11,13 @@ import time
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor
+import matplotlib.pyplot as plt
+import seaborn as sns
+from datetime import datetime
+from psycopg import connect
+from psycopg.rows import dict_row
 import psycopg2
+
 
 def max_start_and_min_date(df):
     min_data = "2024-01-01 00:00"
@@ -342,10 +344,8 @@ def rename_station(df):
 def date_column_change(df):
     actual_col = []
     for date_column in df.iloc[:, 3:].columns:
-        if isinstance(date_column, (datetime.datetime, pd.Timestamp)):
-            actual_col.append(date_column)
-    
-    # Обновляем названия столбцов
+        actual_col.append(date_column)
+
     df.iloc[:, 3:].columns = actual_col
     return df
 
@@ -397,8 +397,6 @@ def preprocessing(df):
     df = del_last_3_symbols(df)
     return df
 
-
-
 # HOUR DISTRIBUTION COEF
 def form_timelist():
     # задаем начальную точку
@@ -414,7 +412,6 @@ def form_timelist():
         periods+=1
 
     return timestamps
-
 
 def fill_plot_values():
     
@@ -461,14 +458,46 @@ def get_db_connect():
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
 
+def get_connection():
+
+    POSTGRES_HOST='80.87.107.22'
+    POSTGRES_PORT=5432
+    POSTGRES_DATABASE='hack'
+    POSTGRES_USERNAME='user'
+    POSTGRES_PASSWORD='password'
+
+    host = POSTGRES_HOST
+    port = POSTGRES_PORT
+    dbname = POSTGRES_DATABASE
+    user = POSTGRES_USERNAME
+    password = POSTGRES_PASSWORD
+
+    cnn = connect(
+        host=host,
+        port=port,
+        dbname=dbname,
+        user=user,
+        password=password,
+        row_factory=dict_row
+    )
+
+    return cnn
+
+
+
+
+
 
 def catboost_learn():
-    connect = get_db_connect()
-    data = pd.read_sql_query("SELECT * FROM raw", connect)
-    data = preprocessing(data)
-    stations = get_metro_json()
-    data = merge_stations(data, stations)
-    data.drop(columns=['railway_station', 'station_id', 'line', 'station'], inplace=True)
+    with get_connection() as cnn:
+        with cnn.cursor() as cur:
+            cur.execute("SELECT * FROM raw")
+            data = cur.fetchall()   
+            
+            data = preprocessing(pd.DataFrame(data))
+    #stations = get_metro_json()
+    #data = merge_stations(data, stations)
+    #data.drop(columns=['railway_station', 'station_id', 'line', 'station'], inplace=True)
     """
     
     X = data.iloc[:, :-1]
@@ -482,10 +511,32 @@ def catboost_learn():
     res = {X.columns[i]: predictions[i] for i in range(len(predictions))}
     """
 
-
     return data
+                
 
 
 
+def get_day_plot():
 
+    pred = 80000
+
+    date = datetime.datetime.strptime("2024-04-04", '%Y-%m-%d')
     
+    timestamps = form_timelist()
+    workday, weekday = fill_plot_values()
+
+    if date.weekday in (5, 6): 
+        x = [i / sum(workday) * pred for i in weekday] 
+    else:
+        x = [i / sum(workday) * pred for i in workday] 
+    
+    
+    plt.figure(figsize=(15, 6))
+    plt.plot(timestamps, x, color='b', marker='o')
+    plt.xlabel('Время')
+    plt.ylabel('Количество пассажиров')
+    plt.title('Пассажиропоток')
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.show()
