@@ -73,14 +73,17 @@ async def select_check(call: CallbackQuery, bot: Bot, state: FSMContext):
         right_station = context_data.get("possible_stations")[str(context_data.get("check_station"))]
         dates = context_data.get("dates")
         
-
-        response_predict = await rq.prediction(station=right_station, dates=dates)
-        if (response_predict.status_code == 200):
-            response_predict = response_predict.content.decode('UTF-8').replace("'","").replace('"',"")
-            await call.message.answer(f"Пассажиропоток - {response_predict}")
-            await state.clear()
-        else:
-            await call.message.answer("Ошибка на сервере получения пассажиропотока")
+        try:
+            response_predict = await rq.prediction(station=right_station, dates=dates)
+            if (response_predict.status_code == 200):
+                response_predict = response_predict.content.decode('UTF-8').replace("'","").replace('"',"")
+                await call.message.answer(f"Пассажиропоток - {response_predict}")
+                await state.clear()
+            else:
+                await call.message.answer("Ошибка на сервере получения пассажиропотока")
+                await state.clear()
+        except:
+            await call.message.answer("Критическая ошибка на сервере получения пассажиропотока")
             await state.clear()
     if (call.data.endswith('no')):
         check_station_new = int(context_data.get('check_station')) + 1

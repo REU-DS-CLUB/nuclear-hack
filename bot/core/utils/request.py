@@ -34,10 +34,10 @@ async def user_text(texts: str):
 
     try:
         response = requests.post(url, verify= False)
+        print(*response)
     except:
         print("Ошибка в request.text()")
     finally:
-        print(*response)
         return response
 
 async def prediction(station, dates):
