@@ -316,7 +316,7 @@ def date_column_change(df):
         # Проверяем, является ли объект date_column объектом datetime.datetime
         if isinstance(date_column, pd.Timestamp):
             # Форматируем дату в формат 'день-месяц-год'
-            formatted_date = date_column.strftime('%d-%m-%Y')
+            formatted_date = date_column.strftime('%Y-%m-%d %H:%M')
             actual_col.append(str(formatted_date)[:-3])
         else:
             # Если это не datetime, используем оригинальное значение столбца
@@ -331,9 +331,8 @@ def preprocessing(df):
     df = rename_station(df)
     default_columns = df.iloc[:, :3].columns.values
     reverse_col = df.iloc[:, 3:].columns[::-1].values
-    df = pd.concat([df[default_columns], df[reverse_col]], axis=1) 
+    df = pd.concat([df[default_columns], df[reverse_col]], axis=1)
     df = date_column_change(df)
-    df.columns = [str(col).strip() for col in df.columns]
     df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], inplace=True)
     return df
 
