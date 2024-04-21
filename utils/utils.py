@@ -393,29 +393,22 @@ def coef(date, start="00:00", end="23:30"):
     return sum(values[index_start:index_end + 1]) / sum(values)
 
 
-def get_db_connect(database, user, password, host, port):
+def get_db_connect():
+
+    with open('db_secret.json') as f:
+        params = json.load(f)
+    
     try:
-        connection = psycopg2.connect(
-            database=database,
-            user=user,
-            password=password,
-            host=host,
-            port=port
-        )
+        connection = psycopg2.connect(**params)
         print("Подключение к базе данных успешно установлено")
         return connection
     except psycopg2.OperationalError as e:
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
 
-def catboost_learn():
 
-    with open('db_secret.json') as f:
-        params = json.load(f)
-    
-    print(params)
-    
-    connect = get_db_connect(**params)
+def catboost_learn():
+    connect = get_db_connect()
     data = pd.read_sql_query("SELECT * FROM raw", connect)
     return data
 
