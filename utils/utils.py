@@ -533,7 +533,7 @@ def calculate_traffic(dates, station):
 
     result = 0
 
-    connect = get_db_connect()
+    connect = get_connection()
     data = pd.read_sql_query("SELECT * FROM test10_temp", connect)
 
     while current_date <= end_date:
