@@ -102,11 +102,11 @@ async def get_voice(message: Message, bot: Bot, state: FSMContext):
         await message.answer('Произошла ошибка, попробуйте позже')
         await state.clear()
     
-    
+async def command_predict(message: Message, bot: Bot, state: FSMContext):
+    predict = "predict" # обращение к API за предиктом
+    await message.answer(f"Вычисленный пассажиропоток: {predict}")
+    await state.clear()
         
-    
-
-    
     
 async def command_cancel(message: Message, bot: Bot, state: FSMContext):
     await state.clear()

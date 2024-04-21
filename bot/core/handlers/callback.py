@@ -81,6 +81,13 @@ async def select_check(call: CallbackQuery, bot: Bot, state: FSMContext):
     await call.message.delete()
     await call.answer()
 
+async def get_predict(call: CallbackQuery, bot: Bot, state: FSMContext):
+    predict = "predict" # обращение к API за предиктом
+    await call.message.answer(f"Вычисленный пассажиропоток: {predict}")
+    await state.clear()
+
+    await call.answer()
+
 async def developers(call: CallbackQuery, bot: Bot, state: FSMContext):
     await call.message.answer(pt.about_developers)
     # Потом добавлю сюда же вывод общей фотографии команды
@@ -90,5 +97,6 @@ async def developers(call: CallbackQuery, bot: Bot, state: FSMContext):
     await bot.send_media_group(call.message.chat.id, media)
 
     await call.answer()
+    
     
     
