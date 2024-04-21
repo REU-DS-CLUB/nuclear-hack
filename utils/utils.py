@@ -386,6 +386,7 @@ def coef(date, start="00:00", end="23:30"):
 
     return sum(values[index_start:index_end + 1]) / sum(values)
 
+
 def get_db_connect(database, user, password, host, port):
     try:
         connection = psycopg2.connect(
@@ -400,21 +401,22 @@ def get_db_connect(database, user, password, host, port):
     except psycopg2.OperationalError as e:
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
-    
-def get_data_from_db(connect, query):
+
+   
+def get_data_from_db(query):
     cursor = connect.cursor()
     cursor.execute(query)
     data = cursor.fetchall()
     cursor.close()
     return data
 
+
 def catboost_learn():
-    params = {
-        "database": "hack",
-        "user": "user",
-        "password": "password",
-        "port": "5432",
-        "host": "213.189.219.51"}
+
+    with open('db_secret.json') as f:
+        params = json.load(f)
+    
+    print(params)
     
     connect = get_db_connect(**params)
     data = get_data_from_db(connect, "SELECT * FROM raw")
