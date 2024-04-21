@@ -11,6 +11,7 @@ import time
 from catboost import CatBoostRegressor
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import timedelta
 
 from datetime import datetime
 from psycopg import connect
@@ -515,3 +516,42 @@ def get_day_plot():
     plt.savefig('docs/day_plot.png')
 
     return 'docs/day_plot.png'
+
+
+def calculate_traffic(dates, station):
+
+    start_date, end_date = dates["start_date"], dates["end_date"]
+
+    start_time = start_date.split(' ')[1]
+    end_time = end_date.split(' ')[1]
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M').date()
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M').date()
+    current_date = start_date
+
+    result = 0
+
+    connect = get_db_connect()
+    data = pd.read_sql_query("SELECT * FROM test10_temp", connect)
+
+    while current_date <= end_date:
+        current_date.strftime('%Y-%m-%d %H:%M')
+        hour_coef = 1
+
+        # если для начала периода указано время
+        if current_date == start_date and start_time!="00:00":
+            hour_coef = coef(current_date, start=start_time)
+        
+        # если для конца периода указано время 
+        if current_date == end_date and end_time!="00:00":
+            hour_coef = coef(current_date, end=end_time)
+            
+        # просчитываем количество пассажиров за текущий день
+        day_traffic = data.loc[data["Станция"] == station, datetime.datetime.strptime(str(current_date), "%Y-%m-%d").strftime("%d/%m/%Y")].values[0]
+        result += day_traffic * hour_coef
+
+        current_date += timedelta(days=1)
+
+    return result
+
+
+
