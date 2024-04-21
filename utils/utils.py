@@ -309,21 +309,21 @@ def rename_station(df):
     df['Станция'] = df['Станция'].replace(rename_dict)
     return df
 
+
 def date_column_change(df):
     actual_col = []
     for date_column in df.iloc[:, 3:].columns:
-        date_split = date_column.split('/')
-        if len(date_split[0]) == 1:
-            date_split[0] = f"0{date_split[0]}"
-        if len(date_split[1]) == 1:
-            date_split[1] = f"0{date_split[1]}"
-        actual_date = f"{date_split[1]}-{date_split[0]}-{date_split[2]}"
-        actual_col.append(actual_date)
-
-    df_date_true = pd.DataFrame(df.iloc[:, 3:].values, columns=actual_col)
-    default_columns = df.iloc[:, :3].columns.values
-    df = pd.concat([df[default_columns],  df_date_true], axis=1)
-
+        # Проверяем, является ли объект date_column объектом datetime.datetime
+        if isinstance(date_column, pd.Timestamp):
+            # Форматируем дату в формат 'день-месяц-год'
+            formatted_date = date_column.strftime('%d-%m-%Y')
+            actual_col.append(str(formatted_date)[:-3])
+        else:
+            # Если это не datetime, используем оригинальное значение столбца
+            actual_col.append(date_column)
+    
+    # Обновляем названия столбцов
+    df.iloc[:, 3:].columns = actual_col
     return df
 
 def preprocessing(df):
@@ -333,6 +333,7 @@ def preprocessing(df):
     reverse_col = df.iloc[:, 3:].columns[::-1].values
     df = pd.concat([df[default_columns], df[reverse_col]], axis=1) 
     df = date_column_change(df)
+    df.columns = [str(col).strip() for col in df.columns]
     df.drop_duplicates(subset=['Станция', 'Номер линии', 'Линия'], inplace=True)
     return df
 
@@ -400,18 +401,24 @@ def get_db_connect(database, user, password, host, port):
     except psycopg2.OperationalError as e:
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
+    
+def get_data_from_db(connect, query):
+    cursor = connect.cursor()
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    return data
 
 def catboost_learn():
     params = {
-        "database": "postgres",
+        "database": "hack",
         "user": "user",
-        "password": "",
+        "password": "password",
         "port": "5432",
-        "host": "213.189.219.51"
-
-    }
+        "host": "213.189.219.51"}
+    
     connect = get_db_connect(**params)
-    if connect:
-        print("коннект")
-    cursor = connect.cursor()
+    data = get_data_from_db(connect, "SELECT * FROM raw")
+    return data
+
     
