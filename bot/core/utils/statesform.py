@@ -17,5 +17,10 @@ class VoiceSteps(StatesGroup):
     GET_VOICE = State()
     IS_CORRECT = State()
     
+class PredictSteps(StatesGroup):
+    GET_STATION = State()
+    
+    
+    
 
 

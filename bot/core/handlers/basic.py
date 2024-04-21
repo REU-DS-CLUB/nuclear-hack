@@ -5,7 +5,7 @@ from aiogram.types import Message
 import json
 from core.keyboards.inline import get_inline_branches, get_inline_check, get_inline_developers, get_inline_start
 from core.utils.dbconnect import Request
-from core.utils.statesform import ButtonsSteps, DocumentSteps, TextSteps, VoiceSteps
+from core.utils.statesform import ButtonsSteps, DocumentSteps, PredictSteps, TextSteps, VoiceSteps
 import core.Promts.promt as pt
 import core.utils.request as rq
 
@@ -64,12 +64,11 @@ async def get_document(message: Message, bot: Bot):
         await bot.download_file(file.file_path, path)
         response = await rq.document(name=file_name, path=path)
         if (response.status_code == 200):
-            await message.answer('Успешно добавлено')
-            if (os.path.exists(path=path)):
-                os.remove(path=path)
+            await message.answer('Успешно добавлено')  
         else:
             await message.answer('Произошла ошибка, попробуйте позже')
-
+        if (os.path.exists(path=path)):
+                os.remove(path=path)
     else:
         await message.answer(f"Бот принимает данные для обновления только в форматах .csv и .xslx")
         
@@ -92,8 +91,7 @@ async def get_voice(message: Message, bot: Bot, state: FSMContext):
         print(response.content)
         
         get_possible_stations = response.content #json
-        if (os.path.exists(path=path)):
-                os.remove(path=path)
+        
         await state.update_data(possible_stations = get_possible_stations)
         await state.update_data(check_station = 0)
         await message.answer(f"Выбранная станция {get_possible_stations['0']} - Верно?", reply_markup=get_inline_check())
@@ -101,10 +99,17 @@ async def get_voice(message: Message, bot: Bot, state: FSMContext):
     else:
         await message.answer('Произошла ошибка, попробуйте позже')
         await state.clear()
+    if (os.path.exists(path=path)):
+                os.remove(path=path)
     
 async def command_predict(message: Message, bot: Bot, state: FSMContext):
-    predict = "predict" # обращение к API за предиктом
-    await message.answer(f"Вычисленный пассажиропоток: {predict}")
+    await message.answer("На какой станции нужно предсказать пассажиропоток на завтра?")
+    await state.set_state(PredictSteps.GET_STATION)
+    
+async def get_station_for_predict(message: Message, bot: Bot, state: FSMContext):
+    predict = 0 # API REQUEST
+    await message.answer(f"Прогнозируемый пассажиропоток: {predict}")
+    await message.answer("КАРТИНКА")
     await state.clear()
         
     

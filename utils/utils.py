@@ -11,10 +11,11 @@ import time
 from catboost import CatBoostRegressor
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 from datetime import datetime
 from psycopg import connect
 from psycopg.rows import dict_row
-
+import psycopg2
 
 
 def max_start_and_min_date(df):
@@ -434,6 +435,21 @@ def coef(date, start="00:00", end="23:30"):
 
     return sum(values[index_start:index_end + 1]) / sum(values)
 
+
+def get_db_connect():
+
+    with open('utils/db_secret.json') as f:
+        params = json.load(f)
+
+    try:
+        connection = psycopg2.connect(**params)
+        print("Подключение к базе данных успешно установлено")
+        return connection
+    except psycopg2.OperationalError as e:
+        print("Произошла ошибка при подключении к базе данных:", e)
+        return None
+
+
 def get_connection():
 
     POSTGRES_HOST='80.87.107.22'
@@ -487,7 +503,6 @@ def catboost_learn():
                 
 
 
-
 def get_day_plot():
 
     pred = 80000
@@ -511,4 +526,6 @@ def get_day_plot():
     plt.legend()
     plt.xticks(rotation=45)
     plt.grid(True)
-    plt.show()
+    plt.savefig('docs/day_plot.png')
+
+    return 'docs/day_plot.png'
