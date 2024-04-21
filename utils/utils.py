@@ -1,3 +1,5 @@
+from codecs import ascii_encode
+from nis import cat
 from debugpy import connect
 from numpy import column_stack
 import requests
@@ -15,6 +17,11 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor
 import psycopg2
 import matplotlib.pyplot as plt
+
+def max_start_and_min_date(df):
+    min_data = "2024-01-01 00:00"
+    max_date = "2024-04-03 00:00"
+    return max_date, min_data
 
 def get_token(auth_token, scope='GIGACHAT_API_PERS'):
     """
@@ -190,6 +197,23 @@ def voice_to_text(voice: str):
         print("Проблема при осуществулении доступа к SalutSpeech Token")
         
 # voice_to_text(r"D:\source\repos\nuclear-hack\voiceAwACAgIAAxkBAAOCZiPvdXpCGkUtba9TPn4OWxF_BsEAAkxHAAJjiCBJJThFtRFabo00BA.oga")
+
+def validate_date(end_date, start_date):
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
+    max_date, min_data = max_start_and_min_date()
+    max_date = datetime.datetime.strptime(end_date, '%Y-%m-%d %H:%M')
+    min_data = datetime.datetime.strptime(start_date, '%Y-%m-%d %H:%M')
+
+    if (end_date > max_date):
+        return False
+    elif (start_date < min_data):
+        return False
+    else:
+        return True
+
+    
+
     
 def get_gigachat_message(auth_key, user_message):
     """
@@ -298,8 +322,13 @@ def get_lev(metro_data, user_station):
         lev_dict_list.append(lev_dict) 
 
     lev_df = pd.DataFrame(lev_dict_list)
-        
-    return lev_df.sort_values(by='Расстояние Ливинштейна', ascending=False).head(3)
+    lev_df = lev_df.sort_values(by="Расстояние Ливинштейна", ascending=False)
+    json_answer = {
+        "0": [lev_df.iloc[0]["Станция"], lev_df.iloc[0]["Линия"]],
+        "1": [lev_df.iloc[1]["Станция"], lev_df.iloc[1]["Линия"]],
+        "2": [lev_df.iloc[2]["Станция"], lev_df.iloc[2]["Линия"]]
+    }
+    return json.dumps(json_answer, ensure_ascii=False)
 
 def rename_station(df):
     with open("utils/rename_station.json", 'r') as file:
@@ -314,21 +343,47 @@ def rename_station(df):
 def date_column_change(df):
     actual_col = []
     for date_column in df.iloc[:, 3:].columns:
-        # Проверяем, является ли объект date_column объектом datetime.datetime или pd.Timestamp
         if isinstance(date_column, (datetime.datetime, pd.Timestamp)):
-            # Форматируем дату в формат 'год-месяц-день час:минута'
-            formatted_date = date_column
-            # Убираем секунды из строки
-            actual_col.append(formatted_date)
+            actual_col.append(date_column)
     
     # Обновляем названия столбцов
     df.iloc[:, 3:].columns = actual_col
     return df
 
 def del_last_3_symbols(df):
-    new_columns = [col[:-3] if i >= 2 else col for i, col in enumerate(df.columns)]
+    new_columns = [col[:-3] if i >= 3 else col for i, col in enumerate(df.columns)]
     df.columns = new_columns
     return df
+
+def get_metro_json():
+    with open("moscow_metro.json", "r") as f:
+        stations = json.load(f)
+        return stations
+    
+def merge_stations(df, stations_data):
+    # Преобразуем список словарей в DataFrame напрямую
+    stations_info = pd.DataFrame(stations_data)
+    
+    # Переводим названия станций в нижний регистр
+    df['Станция'] = df['Станция'].str.lower()
+    stations_info['station'] = stations_info['station'].str.lower()
+    
+    # Функция для получения лучшего совпадения по Левенштейну
+    def get_best_match(row):
+        best_match = process.extractOne(row['Станция'], stations_info['station'], scorer=fuzz.token_sort_ratio)
+        return best_match[0] if best_match[1] >= 80 else None  # Возвращаем совпадение, если достаточно хорошее
+    
+    # Применяем функцию сопоставления
+    df['matched_station'] = df.apply(get_best_match, axis=1)
+    
+    # Объединяем данные
+    result_df = pd.merge(df, stations_info, left_on='matched_station', right_on='station', how='left')
+    
+    # Убираем временную колонку
+    result_df.drop(columns=['matched_station'], inplace=True)
+    
+    # Возвращаем итоговый DataFrame
+    return result_df
 
 
 def preprocessing(df):
@@ -396,9 +451,9 @@ def coef(date, start="00:00", end="23:30"):
 
 def get_db_connect():
 
-    with open('db_secret.json') as f:
+    with open('utils/db_secret.json') as f:
         params = json.load(f)
-    
+
     try:
         connection = psycopg2.connect(**params)
         print("Подключение к базе данных успешно установлено")
@@ -414,6 +469,24 @@ def get_db_connect():
 def catboost_learn():
     connect = get_db_connect()
     data = pd.read_sql_query("SELECT * FROM raw", connect)
+    data = preprocessing(data)
+    stations = get_metro_json()
+    data = merge_stations(data, stations)
+    data.drop(columns=['railway_station', 'station_id', 'line', 'station'], inplace=True)
+    """
+    
+    X = data.iloc[:, :-1]
+    y = data.iloc[:, -1]
+
+    cat_features = ['Станция', 'Номер линии', 'Линия']
+    model = CatBoostRegressor(iterations=1000, learning_rate=0.1, depth=10, cat_features=cat_features)
+    model.fit(X, y)
+
+    predictions = model.predict(X[:, 1:])
+    res = {X.columns[i]: predictions[i] for i in range(len(predictions))}
+    """
+
+
     return data
 
 

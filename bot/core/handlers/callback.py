@@ -69,8 +69,8 @@ async def predict(call: CallbackQuery, bot: Bot, state: FSMContext):
 async def select_check(call: CallbackQuery, bot: Bot, state: FSMContext):
     context_data = await state.get_data()
     if (call.data.endswith('yes')):
-        right_station = context_data.get("possible_stations")[context_data.get("check_station")]
-        predict = "фикция от " + right_station # здесь типо получаю предикт
+        right_station = context_data.get("possible_stations")[str(context_data.get("check_station"))]
+        predict = "фикция от " + str(right_station) # здесь типо получаю предикт
         await call.message.answer(f"Предсказание - {predict}")
         await state.clear()
     if (call.data.endswith('no')):
@@ -79,6 +79,13 @@ async def select_check(call: CallbackQuery, bot: Bot, state: FSMContext):
         await state.set_state(TextSteps.GET_TEXT)
         await get_text(call.message, bot, state)
     await call.message.delete()
+    await call.answer()
+
+async def get_predict(call: CallbackQuery, bot: Bot, state: FSMContext):
+    predict = "predict" # обращение к API за предиктом
+    await call.message.answer(f"Вычисленный пассажиропоток: {predict}")
+    await state.clear()
+
     await call.answer()
 
 async def developers(call: CallbackQuery, bot: Bot, state: FSMContext):
@@ -90,5 +97,6 @@ async def developers(call: CallbackQuery, bot: Bot, state: FSMContext):
     await bot.send_media_group(call.message.chat.id, media)
 
     await call.answer()
+    
     
     
