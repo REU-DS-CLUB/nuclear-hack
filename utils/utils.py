@@ -13,9 +13,9 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostRegressor
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime
-from psycopg import connect
-from psycopg.rows import dict_row
+# from datetime import datetime
+# from psycopg import connect
+# from psycopg.rows import dict_row
 import psycopg2
 
 
@@ -458,6 +458,7 @@ def get_db_connect():
         print("Произошла ошибка при подключении к базе данных:", e)
         return None
 
+
 def get_connection():
 
     POSTGRES_HOST='80.87.107.22'
@@ -482,10 +483,6 @@ def get_connection():
     )
 
     return cnn
-
-
-
-
 
 
 def catboost_learn():
@@ -515,7 +512,6 @@ def catboost_learn():
                 
 
 
-
 def get_day_plot():
 
     pred = 80000
@@ -539,4 +535,6 @@ def get_day_plot():
     plt.legend()
     plt.xticks(rotation=45)
     plt.grid(True)
-    plt.show()
+    plt.savefig('docs/day_plot.png')
+
+    return 'docs/day_plot.png'
