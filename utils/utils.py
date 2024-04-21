@@ -16,6 +16,8 @@ import seaborn as sns
 from datetime import datetime
 from psycopg import connect
 from psycopg.rows import dict_row
+import psycopg2
+
 
 def max_start_and_min_date(df):
     min_data = "2024-01-01 00:00"
@@ -483,6 +485,9 @@ def get_connection():
 
 
 
+
+
+
 def catboost_learn():
     with get_connection() as cnn:
         with cnn.cursor() as cur:
@@ -511,5 +516,27 @@ def catboost_learn():
 
 
 
+def get_day_plot():
 
+    pred = 80000
+
+    date = datetime.datetime.strptime("2024-04-04", '%Y-%m-%d')
     
+    timestamps = form_timelist()
+    workday, weekday = fill_plot_values()
+
+    if date.weekday in (5, 6): 
+        x = [i / sum(workday) * pred for i in weekday] 
+    else:
+        x = [i / sum(workday) * pred for i in workday] 
+    
+    
+    plt.figure(figsize=(15, 6))
+    plt.plot(timestamps, x, color='b', marker='o')
+    plt.xlabel('Время')
+    plt.ylabel('Количество пассажиров')
+    plt.title('Пассажиропоток')
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.show()
