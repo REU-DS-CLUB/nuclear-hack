@@ -1,31 +1,41 @@
 import requests
 
-def document(name: str, path: str):
+async def document(name: str, path: str):
     url = f"http://213.189.219.51:8000/handlers/file/{name}"
     
     file =  open(path, "rb")
     FF = {"file" : file}
 
-    try:
-        response = requests.post(url, files=FF, verify= False)
-    except:
-        print("Ошибка в request.document()")
-        return -1
+    response = requests.post(url, files=FF, verify= False)
+    # try:
+    #     response = requests.post(url, files=FF, verify= False)
+    # except Exception as e:
+    #     print("Ошибка в request.document()")
+    #     print(e)
     print(response)
-    print(*response)
     return response
 
-def voice(path: str):
-    url = f"http://213.189.219.51:8000/handlers/audio"
+async def voice(path: str):
+    url = f"http://213.189.219.51:8000/handlers/audio_prev"
     
     file =  open(path, "rb")
     FF = {"file" : file}
 
     try:
-        response = requests.get(url, files=FF, verify= False)
+        response = await requests.get(url, files=FF, verify= False) 
     except:
-        print("Ошибка в request.document()")
+        print("Ошибка в request.voice()")
+    print(response)
+    return response
+    
+
+def text(text: str):
+    url = f"http://213.189.219.51:8000/handlers/audio_prev"
+
+    try:
+        response = requests.get(url, verify= False)
+    except:
+        print("Ошибка в request.text()")
         return -1
     print(response)
-    print(*response)
     return response
