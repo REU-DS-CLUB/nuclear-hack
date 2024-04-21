@@ -520,6 +520,9 @@ def get_day_plot():
 
 def calculate_traffic(dates, station):
 
+    station_name = station[0]
+    line = station[1]
+
     start_date, end_date = dates["start_date"], dates["end_date"]
 
     start_time = start_date.split(' ')[1]
@@ -546,7 +549,7 @@ def calculate_traffic(dates, station):
             hour_coef = coef(current_date, end=end_time)
             
         # просчитываем количество пассажиров за текущий день
-        day_traffic = data.loc[data["Станция"] == station, datetime.datetime.strptime(str(current_date), "%Y-%m-%d").strftime("%d/%m/%Y")].values[0]
+        day_traffic = data.loc[(data["Станция"] == station_name) & (data["Линия"] == line), datetime.datetime.strptime(str(current_date), "%Y-%m-%d").strftime("%d/%m/%Y")].values[0]
         result += day_traffic * hour_coef
 
         current_date += timedelta(days=1)
